@@ -43,3 +43,15 @@ class EmbeddingProviderError(EmbeddingError):
 
 class InvalidEmbeddingDimensionError(EmbeddingError):
     """Raised when an embedding provider returns an unexpected vector size."""
+
+
+class AnswerError(Exception):
+    """Base class for answer provider failures."""
+
+
+class AnswerConfigurationError(AnswerError):
+    """Raised when answer provider configuration is invalid."""
+
+
+class AnswerProviderError(AnswerError):
+    """Raised when an answer provider request fails."""

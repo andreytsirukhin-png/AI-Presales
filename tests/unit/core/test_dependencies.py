@@ -78,7 +78,13 @@ def test_default_vector_store_is_memory() -> None:
 
 def test_default_answer_provider_is_mock() -> None:
     settings = _current_settings()
-    provider = build_answer_provider(settings.answer_provider)
+    provider = build_answer_provider(
+        settings.answer_provider,
+        settings.openai_api_key,
+        settings.openai_chat_model,
+        settings.openai_temperature,
+        settings.openai_max_output_tokens,
+    )
 
     assert provider.generate_answer("question", []) is not None
 
@@ -109,7 +115,13 @@ def test_service_dependencies_are_resolvable() -> None:
         settings.openai_api_key,
         settings.openai_embedding_model,
     )
-    answer_provider = build_answer_provider(settings.answer_provider)
+    answer_provider = build_answer_provider(
+        settings.answer_provider,
+        settings.openai_api_key,
+        settings.openai_chat_model,
+        settings.openai_temperature,
+        settings.openai_max_output_tokens,
+    )
     parser = get_pdf_parser()
     chunker = get_text_chunker()
 
@@ -316,7 +328,13 @@ def test_shared_metadata_state_survives_across_requests() -> None:
             settings.openai_embedding_model,
         ),
         lambda settings: build_vector_store(settings.vector_store_backend),
-        lambda settings: build_answer_provider(settings.answer_provider),
+        lambda settings: build_answer_provider(
+            settings.answer_provider,
+            settings.openai_api_key,
+            settings.openai_chat_model,
+            settings.openai_temperature,
+            settings.openai_max_output_tokens,
+        ),
     ],
 )
 def test_infrastructure_builders_are_cached_singletons(builder) -> None:

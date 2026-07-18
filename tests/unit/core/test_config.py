@@ -27,6 +27,9 @@ def test_settings_default_values() -> None:
     assert settings.openai_embedding_model == "text-embedding-3-small"
     assert settings.vector_store_backend == "memory"
     assert settings.answer_provider == "mock"
+    assert settings.openai_chat_model == "gpt-4.1-mini"
+    assert settings.openai_temperature == 0.0
+    assert settings.openai_max_output_tokens == 800
     assert settings.search_default_top_k == 5
     assert settings.search_max_top_k == 50
 
@@ -80,6 +83,28 @@ def test_settings_rejects_invalid_backend_or_provider(
 
     with pytest.raises(ValidationError):
         Settings()
+
+
+def test_settings_parses_float_environment_values(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("AI_PRESALES_OPENAI_TEMPERATURE", "0.5")
+
+    settings = Settings()
+
+    assert settings.openai_temperature == 0.5
+
+
+def test_settings_parses_openai_answer_environment_values(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("AI_PRESALES_ANSWER_PROVIDER", "openai")
+    monkeypatch.setenv("AI_PRESALES_OPENAI_CHAT_MODEL", "gpt-4.1")
+    monkeypatch.setenv("AI_PRESALES_OPENAI_MAX_OUTPUT_TOKENS", "1024")
+
+    settings = Settings()
+
+    assert settings.answer_provider == "openai"
+    assert settings.openai_chat_model == "gpt-4.1"
+    assert settings.openai_max_output_tokens == 1024
 
 
 def test_get_settings_is_cached() -> None:

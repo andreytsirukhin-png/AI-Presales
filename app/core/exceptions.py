@@ -27,3 +27,19 @@ class InvalidPdfError(ParseError):
 
 class EmptyPdfError(ParseError):
     """Raised when a PDF contains no extractable text."""
+
+
+class EmbeddingError(Exception):
+    """Base class for embedding provider failures."""
+
+
+class EmbeddingConfigurationError(EmbeddingError):
+    """Raised when embedding provider configuration is invalid."""
+
+
+class EmbeddingProviderError(EmbeddingError):
+    """Raised when an embedding provider request fails."""
+
+
+class InvalidEmbeddingDimensionError(EmbeddingError):
+    """Raised when an embedding provider returns an unexpected vector size."""

@@ -23,6 +23,8 @@ def test_settings_default_values() -> None:
     assert settings.storage_path == "uploads"
     assert settings.embedding_provider == "mock"
     assert settings.embedding_dimension == 16
+    assert settings.openai_api_key == ""
+    assert settings.openai_embedding_model == "text-embedding-3-small"
     assert settings.vector_store_backend == "memory"
     assert settings.answer_provider == "mock"
     assert settings.search_default_top_k == 5

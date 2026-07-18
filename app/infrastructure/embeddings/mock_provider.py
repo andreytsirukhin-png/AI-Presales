@@ -32,3 +32,7 @@ class MockEmbeddingProvider:
             vector.append(raw_value / 65535.0)
 
         return vector
+
+    def embed_texts(self, texts: list[str]) -> list[list[float]]:
+        """Generate embedding vectors for multiple texts."""
+        return [self.embed(text) for text in texts]

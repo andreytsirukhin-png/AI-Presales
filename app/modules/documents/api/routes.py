@@ -9,7 +9,12 @@ from app.core.dependencies import (
     get_parse_service,
     get_search_service,
 )
-from app.core.exceptions import DocumentNotFoundError, EmptyPdfError, InvalidPdfError
+from app.core.exceptions import (
+    DocumentNotFoundError,
+    EmbeddingError,
+    EmptyPdfError,
+    InvalidPdfError,
+)
 from app.modules.documents.schemas.ask import AskRequest, AskResponse
 from app.modules.documents.schemas.chunk import ChunkResponse
 from app.modules.documents.schemas.document import DocumentMetadata
@@ -86,6 +91,8 @@ async def embed_document(
         raise HTTPException(status_code=422, detail=str(exc)) from exc
     except EmptyPdfError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
+    except EmbeddingError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
 
 
 @router.post("/{document_id}/index", response_model=IndexResponse)
@@ -102,6 +109,8 @@ async def index_document(
         raise HTTPException(status_code=422, detail=str(exc)) from exc
     except EmptyPdfError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
+    except EmbeddingError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
 
 
 @router.post("/{document_id}/search", response_model=SearchResponse)
@@ -117,6 +126,8 @@ async def search_document(
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     except ValueError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
+    except EmbeddingError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
 
 
 @router.post("/{document_id}/ask", response_model=AskResponse)
@@ -131,4 +142,6 @@ async def ask_document(
     except DocumentNotFoundError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    except EmbeddingError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc

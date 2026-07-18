@@ -1,15 +1,18 @@
 from fastapi import APIRouter, HTTPException
 
 from app.core.exceptions import DocumentNotFoundError, EmptyPdfError, InvalidPdfError
+from app.infrastructure.answers import MockAnswerProvider
 from app.infrastructure.embeddings import MockEmbeddingProvider
 from app.infrastructure.storage import LocalFileStorage
 from app.infrastructure.vector_store import InMemoryVectorStore
+from app.modules.documents.schemas.ask import AskRequest, AskResponse
 from app.modules.documents.schemas.chunk import ChunkResponse
 from app.modules.documents.schemas.document import DocumentMetadata
 from app.modules.documents.schemas.embedding import EmbeddingResponse
 from app.modules.documents.schemas.index import IndexResponse
 from app.modules.documents.schemas.parse import ParseResponse
 from app.modules.documents.schemas.search import SearchRequest, SearchResponse
+from app.modules.documents.services.ask_service import AskService
 from app.modules.documents.services.chunk_service import ChunkService
 from app.modules.documents.services.embedding_service import EmbeddingService
 from app.modules.documents.services.index_service import IndexService
@@ -35,6 +38,10 @@ index_service = IndexService(
 search_service = SearchService(
     provider=MockEmbeddingProvider(),
     vector_store=_vector_store,
+)
+ask_service = AskService(
+    search_service=search_service,
+    answer_provider=MockAnswerProvider(),
 )
 
 
@@ -104,6 +111,17 @@ async def search_document(document_id: str, request: SearchRequest) -> SearchRes
     """Search indexed chunks within a previously uploaded PDF document."""
     try:
         return search_service.search(document_id, request)
+    except DocumentNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+
+@router.post("/{document_id}/ask", response_model=AskResponse)
+async def ask_document(document_id: str, request: AskRequest) -> AskResponse:
+    """Answer a question using indexed document context."""
+    try:
+        return ask_service.ask(document_id, request)
     except DocumentNotFoundError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     except ValueError as exc:

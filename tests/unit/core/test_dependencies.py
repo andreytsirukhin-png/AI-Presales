@@ -63,6 +63,8 @@ def test_embedding_dimension_comes_from_settings() -> None:
     provider = build_embedding_provider(
         settings.embedding_provider,
         settings.embedding_dimension,
+        settings.openai_api_key,
+        settings.openai_embedding_model,
     )
 
     assert provider.dimension == settings.embedding_dimension
@@ -104,6 +106,8 @@ def test_service_dependencies_are_resolvable() -> None:
     embedding_provider = build_embedding_provider(
         settings.embedding_provider,
         settings.embedding_dimension,
+        settings.openai_api_key,
+        settings.openai_embedding_model,
     )
     answer_provider = build_answer_provider(settings.answer_provider)
     parser = get_pdf_parser()
@@ -308,6 +312,8 @@ def test_shared_metadata_state_survives_across_requests() -> None:
         lambda settings: build_embedding_provider(
             settings.embedding_provider,
             settings.embedding_dimension,
+            settings.openai_api_key,
+            settings.openai_embedding_model,
         ),
         lambda settings: build_vector_store(settings.vector_store_backend),
         lambda settings: build_answer_provider(settings.answer_provider),

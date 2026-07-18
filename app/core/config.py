@@ -5,7 +5,7 @@ from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 StorageBackend = Literal["local"]
-EmbeddingProviderName = Literal["mock"]
+EmbeddingProviderName = Literal["mock", "openai"]
 VectorStoreBackend = Literal["memory"]
 AnswerProviderName = Literal["mock"]
 
@@ -29,6 +29,8 @@ class Settings(BaseSettings):
 
     embedding_provider: EmbeddingProviderName = "mock"
     embedding_dimension: int = Field(default=16, ge=1)
+    openai_api_key: str = ""
+    openai_embedding_model: str = "text-embedding-3-small"
 
     vector_store_backend: VectorStoreBackend = "memory"
 

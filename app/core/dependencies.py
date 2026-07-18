@@ -5,7 +5,7 @@ from fastapi import Depends
 from app.core.config import Settings, get_settings
 from app.infrastructure.answers import MockAnswerProvider
 from app.infrastructure.answers.protocol import AnswerProvider
-from app.infrastructure.embeddings import MockEmbeddingProvider
+from app.infrastructure.embeddings import MockEmbeddingProvider, OpenAIEmbeddingProvider
 from app.infrastructure.embeddings.protocol import EmbeddingProvider
 from app.infrastructure.storage import LocalFileStorage
 from app.infrastructure.storage.protocol import FileStorage
@@ -32,11 +32,22 @@ def build_file_storage(storage_backend: str, storage_path: str) -> FileStorage:
 
 
 @lru_cache
-def build_embedding_provider(provider_name: str, dimension: int) -> EmbeddingProvider:
+def build_embedding_provider(
+    provider_name: str,
+    dimension: int,
+    openai_api_key: str,
+    openai_embedding_model: str,
+) -> EmbeddingProvider:
     """Build a cached embedding provider for the given configuration."""
-    if provider_name != "mock":
-        raise ValueError(f"Unsupported embedding provider: {provider_name}")
-    return MockEmbeddingProvider(dimension=dimension)
+    if provider_name == "mock":
+        return MockEmbeddingProvider(dimension=dimension)
+    if provider_name == "openai":
+        return OpenAIEmbeddingProvider(
+            api_key=openai_api_key,
+            model=openai_embedding_model,
+            dimension=dimension,
+        )
+    raise ValueError(f"Unsupported embedding provider: {provider_name}")
 
 
 @lru_cache
@@ -81,6 +92,8 @@ def get_embedding_provider(
     return build_embedding_provider(
         settings.embedding_provider,
         settings.embedding_dimension,
+        settings.openai_api_key,
+        settings.openai_embedding_model,
     )
 
 

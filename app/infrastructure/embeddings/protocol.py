@@ -12,3 +12,7 @@ class EmbeddingProvider(Protocol):
     def embed(self, text: str) -> list[float]:
         """Generate an embedding vector for the given text."""
         ...
+
+    def embed_texts(self, texts: list[str]) -> list[list[float]]:
+        """Generate embedding vectors for multiple texts."""
+        ...

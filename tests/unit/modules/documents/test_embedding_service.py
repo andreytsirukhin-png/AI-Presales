@@ -51,6 +51,10 @@ class RecordingEmbeddingProvider:
         self.calls.append(text)
         return MockEmbeddingProvider().embed(text)
 
+    def embed_texts(self, texts: list[str]) -> list[list[float]]:
+        self.calls.extend(texts)
+        return [MockEmbeddingProvider().embed(text) for text in texts]
+
 
 def _seed_uploaded_metadata(
     storage: FakeFileStorage,

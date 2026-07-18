@@ -33,15 +33,20 @@ class EmbeddingService:
         """
         self._metadata_service.get(document_id)
         chunk_response = self._chunk_service.chunk(document_id)
+        vectors = self._embed_chunk_texts([chunk.text for chunk in chunk_response.chunks])
 
         return [
             Embedding(
                 index=chunk.index,
                 text=chunk.text,
-                vector=self._provider.embed(chunk.text),
+                vector=vector,
             )
-            for chunk in chunk_response.chunks
+            for chunk, vector in zip(chunk_response.chunks, vectors)
         ]
+
+    def _embed_chunk_texts(self, texts: list[str]) -> list[list[float]]:
+        """Embed chunk texts using the configured provider."""
+        return self._provider.embed_texts(texts)
 
     def embed(self, document_id: str) -> EmbeddingResponse:
         """Validate, chunk, and embed a stored document.

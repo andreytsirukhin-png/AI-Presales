@@ -8,7 +8,7 @@ from app.modules.documents.schemas.parse import ParsedPdf
 
 
 class PDFParser:
-    """Extracts plain text and page metadata from PDF bytes."""
+    """Extracts text content from PDF byte streams."""
 
     def parse(self, content: bytes) -> ParsedPdf:
         """Parse PDF bytes and return extracted text with metadata.
@@ -27,14 +27,27 @@ class PDFParser:
             reader = PdfReader(BytesIO(content), strict=True)
         except PdfReadError as exc:
             raise InvalidPdfError("Unable to read PDF file.") from exc
+        except Exception as exc:
+            raise InvalidPdfError("Unable to read PDF file.") from exc
 
-        page_texts: list[str] = []
+        if reader.is_encrypted:
+            try:
+                if reader.decrypt("") == 0:
+                    raise InvalidPdfError("Unable to read encrypted PDF file.")
+            except PdfReadError as exc:
+                raise InvalidPdfError("Unable to read encrypted PDF file.") from exc
+
+        page_count = len(reader.pages)
+        if page_count == 0:
+            raise EmptyPdfError("PDF contains no pages.")
+
+        extracted_pages: list[str] = []
         for page in reader.pages:
-            extracted = page.extract_text() or ""
-            page_texts.append(extracted)
+            page_text = page.extract_text() or ""
+            extracted_pages.append(page_text)
 
-        text = "\n".join(page_texts).strip()
+        text = "\n".join(extracted_pages).strip()
         if not text:
             raise EmptyPdfError("PDF contains no extractable text.")
 
-        return ParsedPdf(page_count=len(reader.pages), text=text)
+        return ParsedPdf(page_count=page_count, text=text)

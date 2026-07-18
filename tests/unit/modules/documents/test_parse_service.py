@@ -2,7 +2,7 @@ import pytest
 
 from app.core.exceptions import DocumentNotFoundError, EmptyPdfError, InvalidPdfError
 from app.modules.documents.services.parse_service import ParseService
-from tests.helpers.pdf import make_empty_pdf, make_text_pdf
+from tests.helpers.pdf import make_blank_pdf, make_empty_pdf, make_text_pdf
 
 
 class FakeFileStorage:
@@ -43,7 +43,9 @@ def test_parse_returns_expected_response(
     assert result.document_id == document_id
     assert result.status == "parsed"
     assert result.page_count == 1
+    assert result.pages == 1
     assert "Requirement one" in result.text
+    assert result.characters == len(result.text)
 
 
 def test_parse_raises_when_document_missing(parse_service: ParseService) -> None:
@@ -51,14 +53,36 @@ def test_parse_raises_when_document_missing(parse_service: ParseService) -> None
         parse_service.parse("missing-doc")
 
 
-def test_parse_propagates_invalid_pdf(
+def test_parse_raises_for_invalid_pdf(
     parse_service: ParseService,
     storage: FakeFileStorage,
 ) -> None:
     document_id = "bad-doc"
+    storage.files[f"{document_id}.pdf"] = b"%PDF-1.4 corrupted content"
+
+    with pytest.raises(InvalidPdfError):
+        parse_service.parse(document_id)
+
+
+def test_parse_propagates_invalid_pdf(
+    parse_service: ParseService,
+    storage: FakeFileStorage,
+) -> None:
+    document_id = "bad-doc-2"
     storage.files[f"{document_id}.pdf"] = b"%PDF-not-really"
 
     with pytest.raises(InvalidPdfError):
+        parse_service.parse(document_id)
+
+
+def test_parse_raises_for_empty_pdf(
+    parse_service: ParseService,
+    storage: FakeFileStorage,
+) -> None:
+    document_id = "empty-doc"
+    storage.files[f"{document_id}.pdf"] = make_blank_pdf()
+
+    with pytest.raises(EmptyPdfError):
         parse_service.parse(document_id)
 
 
@@ -66,7 +90,7 @@ def test_parse_propagates_empty_pdf(
     parse_service: ParseService,
     storage: FakeFileStorage,
 ) -> None:
-    document_id = "empty-doc"
+    document_id = "empty-doc-2"
     storage.files[f"{document_id}.pdf"] = make_empty_pdf()
 
     with pytest.raises(EmptyPdfError):

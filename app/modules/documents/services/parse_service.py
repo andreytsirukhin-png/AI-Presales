@@ -3,9 +3,11 @@ from app.infrastructure.storage.protocol import FileStorage
 from app.modules.documents.parsers.pdf_parser import PDFParser
 from app.modules.documents.schemas.parse import ParseResponse
 
+PDF_EXTENSION = ".pdf"
+
 
 class ParseService:
-    """Loads a stored PDF and extracts its text content."""
+    """Orchestrates loading stored documents and extracting their text."""
 
     def __init__(
         self,
@@ -16,31 +18,35 @@ class ParseService:
         self._parser = parser or PDFParser()
 
     def parse(self, document_id: str) -> ParseResponse:
-        """Parse a previously uploaded PDF document.
+        """Load a stored PDF and extract its text content.
 
         Args:
-            document_id: Identifier returned by the upload service.
+            document_id: Identifier returned by the upload endpoint.
 
         Returns:
-            Extracted text and page metadata for the document.
+            Parsed document metadata and extracted text.
 
         Raises:
-            DocumentNotFoundError: If no stored file exists for the document.
+            DocumentNotFoundError: If no file exists for the given identifier.
             InvalidPdfError: If the stored file is not a readable PDF.
             EmptyPdfError: If the PDF contains no extractable text.
         """
-        storage_path = f"{document_id}.pdf"
+        storage_path = f"{document_id}{PDF_EXTENSION}"
+
         try:
             content = self._storage.load(storage_path)
         except FileNotFoundError as exc:
             raise DocumentNotFoundError(
-                f"Document '{document_id}' was not found."
+                f"Document not found: {document_id}"
             ) from exc
 
         parsed = self._parser.parse(content)
+
         return ParseResponse(
             document_id=document_id,
             page_count=parsed.page_count,
+            pages=parsed.pages,
+            characters=parsed.characters,
             text=parsed.text,
             status="parsed",
         )

@@ -14,16 +14,16 @@ class FileTooLargeError(UploadError):
 
 
 class ParseError(Exception):
-    """Base class for document parse failures."""
+    """Base class for document parsing failures."""
 
 
 class DocumentNotFoundError(ParseError):
-    """Raised when a document identifier does not map to stored content."""
+    """Raised when a requested document does not exist in storage."""
 
 
 class InvalidPdfError(ParseError):
-    """Raised when PDF bytes cannot be read as a valid document."""
+    """Raised when PDF bytes cannot be parsed."""
 
 
 class EmptyPdfError(ParseError):
-    """Raised when a PDF has no extractable text content."""
+    """Raised when a PDF contains no extractable text."""

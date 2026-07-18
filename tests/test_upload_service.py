@@ -24,7 +24,6 @@ class FakeFileStorage:
             raise FileNotFoundError(relative_path) from exc
 
 
-
 @pytest.fixture
 def storage() -> FakeFileStorage:
     return FakeFileStorage()

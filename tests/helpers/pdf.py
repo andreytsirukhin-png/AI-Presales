@@ -6,7 +6,7 @@ from pypdf import PdfWriter
 from pypdf.generic import DecodedStreamObject, DictionaryObject, NameObject
 
 
-def make_text_pdf(text: str) -> bytes:
+def make_text_pdf(text: str = "Hello World") -> bytes:
     """Build a one-page PDF containing the given extractable text.
 
     Uses ``pypdf.PdfWriter`` so the xref table and ``startxref`` offset are
@@ -52,10 +52,16 @@ def make_text_pdf(text: str) -> bytes:
     return buffer.getvalue()
 
 
-def make_empty_pdf() -> bytes:
-    """Build a valid one-page PDF with no extractable text content."""
+def make_blank_pdf(page_count: int = 1) -> bytes:
+    """Build a valid PDF with blank pages and no extractable text."""
     writer = PdfWriter()
-    writer.add_blank_page(width=612, height=792)
+    for _ in range(page_count):
+        writer.add_blank_page(width=612, height=792)
     buffer = BytesIO()
     writer.write(buffer)
     return buffer.getvalue()
+
+
+def make_empty_pdf() -> bytes:
+    """Build a valid one-page PDF with no extractable text content."""
+    return make_blank_pdf()

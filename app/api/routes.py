@@ -4,10 +4,12 @@ from app.core.exceptions import FileTooLargeError, UnsupportedFileTypeError
 from app.infrastructure.storage import LocalFileStorage
 from app.models.analysis import AnalysisResult
 from app.models.document import UploadResponse
+from app.modules.documents.api.routes import router as documents_router
 from app.services.demo_analysis import build_demo_analysis
 from app.services.upload_service import UploadService
 
 router = APIRouter(prefix="/api/v1")
+router.include_router(documents_router)
 upload_service = UploadService(LocalFileStorage())
 
 

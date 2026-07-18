@@ -1,4 +1,4 @@
-"""Application-level exceptions for upload validation."""
+"""Application-level exceptions for upload and document parsing."""
 
 
 class UploadError(Exception):
@@ -11,3 +11,19 @@ class UnsupportedFileTypeError(UploadError):
 
 class FileTooLargeError(UploadError):
     """Raised when the uploaded file exceeds the size limit."""
+
+
+class ParseError(Exception):
+    """Base class for document parsing failures."""
+
+
+class DocumentNotFoundError(ParseError):
+    """Raised when a requested document does not exist in storage."""
+
+
+class InvalidPdfError(ParseError):
+    """Raised when PDF bytes cannot be parsed."""
+
+
+class EmptyPdfError(ParseError):
+    """Raised when a PDF contains no extractable text."""

@@ -1,7 +1,7 @@
-from fastapi import APIRouter, File, HTTPException, UploadFile
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 
+from app.core.dependencies import get_upload_service
 from app.core.exceptions import FileTooLargeError, UnsupportedFileTypeError
-from app.infrastructure.storage import LocalFileStorage
 from app.models.analysis import AnalysisResult
 from app.models.document import UploadResponse
 from app.modules.documents.api.routes import router as documents_router
@@ -9,13 +9,14 @@ from app.services.demo_analysis import build_demo_analysis
 from app.services.upload_service import UploadService
 
 router = APIRouter(prefix="/api/v1")
-_storage = LocalFileStorage()
 router.include_router(documents_router)
-upload_service = UploadService(_storage)
 
 
 @router.post("/documents/upload", response_model=UploadResponse, tags=["documents"])
-async def upload_document(file: UploadFile = File(...)) -> UploadResponse:
+async def upload_document(
+    file: UploadFile = File(...),
+    upload_service: UploadService = Depends(get_upload_service),
+) -> UploadResponse:
     content = await file.read()
     try:
         return upload_service.upload(

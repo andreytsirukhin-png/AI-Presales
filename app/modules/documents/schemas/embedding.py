@@ -5,6 +5,7 @@ class Embedding(BaseModel):
     """Vector representation of a single text chunk."""
 
     index: int = Field(..., ge=0, description="Zero-based chunk index.")
+    text: str = Field(..., description="Source text for the chunk.")
     vector: list[float] = Field(..., description="Embedding vector for the chunk text.")
 
 

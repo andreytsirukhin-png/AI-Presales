@@ -1,4 +1,4 @@
-"""Application-level exceptions for upload and document parsing."""
+"""Application-level exceptions for document upload and parsing."""
 
 
 class UploadError(Exception):

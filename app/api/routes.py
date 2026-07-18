@@ -9,8 +9,9 @@ from app.services.demo_analysis import build_demo_analysis
 from app.services.upload_service import UploadService
 
 router = APIRouter(prefix="/api/v1")
+_storage = LocalFileStorage()
 router.include_router(documents_router)
-upload_service = UploadService(LocalFileStorage())
+upload_service = UploadService(_storage)
 
 
 @router.post("/documents/upload", response_model=UploadResponse, tags=["documents"])

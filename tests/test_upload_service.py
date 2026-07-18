@@ -17,7 +17,7 @@ class FakeFileStorage:
     def save(self, relative_path: str, content: bytes) -> None:
         self.saved_files[relative_path] = content
 
-    def read(self, relative_path: str) -> bytes:
+    def load(self, relative_path: str) -> bytes:
         try:
             return self.saved_files[relative_path]
         except KeyError as exc:

@@ -1,7 +1,7 @@
 from app.core.exceptions import DocumentNotFoundError
 from app.infrastructure.storage.protocol import FileStorage
 from app.modules.documents.parsers.pdf_parser import PDFParser
-from app.modules.documents.schemas.document import ParseResponse
+from app.modules.documents.schemas.parse import ParseResponse
 
 PDF_EXTENSION = ".pdf"
 
@@ -9,7 +9,11 @@ PDF_EXTENSION = ".pdf"
 class ParseService:
     """Orchestrates loading stored documents and extracting their text."""
 
-    def __init__(self, storage: FileStorage, parser: PDFParser | None = None) -> None:
+    def __init__(
+        self,
+        storage: FileStorage,
+        parser: PDFParser | None = None,
+    ) -> None:
         self._storage = storage
         self._parser = parser or PDFParser()
 
@@ -30,7 +34,7 @@ class ParseService:
         storage_path = f"{document_id}{PDF_EXTENSION}"
 
         try:
-            content = self._storage.read(storage_path)
+            content = self._storage.load(storage_path)
         except FileNotFoundError as exc:
             raise DocumentNotFoundError(
                 f"Document not found: {document_id}"
@@ -40,7 +44,9 @@ class ParseService:
 
         return ParseResponse(
             document_id=document_id,
+            page_count=parsed.page_count,
             pages=parsed.pages,
             characters=parsed.characters,
             text=parsed.text,
+            status="parsed",
         )

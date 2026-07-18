@@ -1,3 +1,3 @@
-from app.modules.documents.parsers.pdf_parser import PDFParser, ParsedPdf
+from app.modules.documents.parsers.pdf_parser import PDFParser
 
-__all__ = ["PDFParser", "ParsedPdf"]
+__all__ = ["PDFParser"]

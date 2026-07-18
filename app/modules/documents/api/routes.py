@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException
 
 from app.core.exceptions import DocumentNotFoundError, EmptyPdfError, InvalidPdfError
 from app.infrastructure.storage import LocalFileStorage
-from app.modules.documents.schemas.document import ParseResponse
+from app.modules.documents.schemas.parse import ParseResponse
 from app.modules.documents.services.parse_service import ParseService
 
 router = APIRouter(prefix="/documents", tags=["documents"])

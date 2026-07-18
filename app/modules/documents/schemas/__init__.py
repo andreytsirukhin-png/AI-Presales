@@ -1,3 +1,3 @@
-from app.modules.documents.schemas.document import ParseResponse
+from app.modules.documents.schemas.parse import ParsedPdf, ParseResponse
 
-__all__ = ["ParseResponse"]
+__all__ = ["ParsedPdf", "ParseResponse"]

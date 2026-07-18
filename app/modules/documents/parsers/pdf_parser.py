@@ -1,19 +1,10 @@
-from dataclasses import dataclass
 from io import BytesIO
 
 from pypdf import PdfReader
 from pypdf.errors import PdfReadError
 
 from app.core.exceptions import EmptyPdfError, InvalidPdfError
-
-
-@dataclass(frozen=True)
-class ParsedPdf:
-    """Structured text extracted from a PDF document."""
-
-    pages: int
-    text: str
-    characters: int
+from app.modules.documents.schemas.parse import ParsedPdf
 
 
 class PDFParser:
@@ -59,8 +50,4 @@ class PDFParser:
         if not text:
             raise EmptyPdfError("PDF contains no extractable text.")
 
-        return ParsedPdf(
-            pages=page_count,
-            text=text,
-            characters=len(text),
-        )
+        return ParsedPdf(page_count=page_count, text=text)

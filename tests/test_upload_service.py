@@ -17,6 +17,13 @@ class FakeFileStorage:
     def save(self, relative_path: str, content: bytes) -> None:
         self.saved_files[relative_path] = content
 
+    def load(self, relative_path: str) -> bytes:
+        try:
+            return self.saved_files[relative_path]
+        except KeyError as exc:
+            raise FileNotFoundError(relative_path) from exc
+
+
 
 @pytest.fixture
 def storage() -> FakeFileStorage:

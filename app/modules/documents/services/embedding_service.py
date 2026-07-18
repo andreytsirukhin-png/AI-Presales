@@ -35,7 +35,11 @@ class EmbeddingService:
         chunk_response = self._chunk_service.chunk(document_id)
 
         return [
-            Embedding(index=chunk.index, vector=self._provider.embed(chunk.text))
+            Embedding(
+                index=chunk.index,
+                text=chunk.text,
+                vector=self._provider.embed(chunk.text),
+            )
             for chunk in chunk_response.chunks
         ]
 

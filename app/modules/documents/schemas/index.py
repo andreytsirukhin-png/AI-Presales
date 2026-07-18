@@ -5,6 +5,7 @@ class IndexedChunk(BaseModel):
     """A stored embedding vector for a document chunk."""
 
     index: int = Field(..., ge=0, description="Zero-based chunk index.")
+    text: str = Field(..., description="Source text for the chunk.")
     vector: list[float] = Field(..., description="Stored embedding vector for the chunk.")
 
 

@@ -9,11 +9,13 @@ from app.modules.documents.schemas.document import DocumentMetadata
 from app.modules.documents.schemas.embedding import EmbeddingResponse
 from app.modules.documents.schemas.index import IndexResponse
 from app.modules.documents.schemas.parse import ParseResponse
+from app.modules.documents.schemas.search import SearchRequest, SearchResponse
 from app.modules.documents.services.chunk_service import ChunkService
 from app.modules.documents.services.embedding_service import EmbeddingService
 from app.modules.documents.services.index_service import IndexService
 from app.modules.documents.services.metadata_service import MetadataService
 from app.modules.documents.services.parse_service import ParseService
+from app.modules.documents.services.search_service import SearchService
 
 router = APIRouter(prefix="/documents", tags=["documents"])
 _storage = LocalFileStorage()
@@ -28,6 +30,10 @@ embedding_service = EmbeddingService(
 )
 index_service = IndexService(
     embedding_service=embedding_service,
+    vector_store=_vector_store,
+)
+search_service = SearchService(
+    provider=MockEmbeddingProvider(),
     vector_store=_vector_store,
 )
 
@@ -90,4 +96,15 @@ async def index_document(document_id: str) -> IndexResponse:
     except InvalidPdfError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
     except EmptyPdfError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+
+@router.post("/{document_id}/search", response_model=SearchResponse)
+async def search_document(document_id: str, request: SearchRequest) -> SearchResponse:
+    """Search indexed chunks within a previously uploaded PDF document."""
+    try:
+        return search_service.search(document_id, request)
+    except DocumentNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except ValueError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc

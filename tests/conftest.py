@@ -6,11 +6,11 @@ from pypdf import PdfWriter
 from pypdf.generic import DecodedStreamObject, DictionaryObject, NameObject
 
 
-def make_text_pdf(text: str) -> bytes:
+def make_text_pdf(text: str = "Hello World") -> bytes:
     """Build a one-page PDF containing the given extractable text.
 
-    Uses ``pypdf.PdfWriter`` so the xref table and ``startxref`` offset are
-    produced by the library rather than hand-calculated.
+    Uses ``pypdf.PdfWriter`` so cross-reference metadata is written by the
+    library rather than hand-calculated.
 
     Args:
         text: Plain text to embed in the page content stream.

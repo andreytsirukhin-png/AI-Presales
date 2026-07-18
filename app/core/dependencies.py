@@ -2,6 +2,7 @@ from functools import lru_cache
 
 from fastapi import Depends
 
+from app.core.config import Settings, get_settings
 from app.infrastructure.answers import MockAnswerProvider
 from app.infrastructure.answers.protocol import AnswerProvider
 from app.infrastructure.embeddings import MockEmbeddingProvider
@@ -23,9 +24,35 @@ from app.services.upload_service import UploadService
 
 
 @lru_cache
-def get_file_storage() -> FileStorage:
-    """Return the shared file storage instance."""
-    return LocalFileStorage()
+def build_file_storage(storage_backend: str, storage_path: str) -> FileStorage:
+    """Build a cached file storage instance for the given configuration."""
+    if storage_backend != "local":
+        raise ValueError(f"Unsupported storage backend: {storage_backend}")
+    return LocalFileStorage(root_dir=storage_path)
+
+
+@lru_cache
+def build_embedding_provider(provider_name: str, dimension: int) -> EmbeddingProvider:
+    """Build a cached embedding provider for the given configuration."""
+    if provider_name != "mock":
+        raise ValueError(f"Unsupported embedding provider: {provider_name}")
+    return MockEmbeddingProvider(dimension=dimension)
+
+
+@lru_cache
+def build_vector_store(backend: str) -> VectorStore:
+    """Build a cached vector store for the given configuration."""
+    if backend != "memory":
+        raise ValueError(f"Unsupported vector store backend: {backend}")
+    return InMemoryVectorStore()
+
+
+@lru_cache
+def build_answer_provider(provider_name: str) -> AnswerProvider:
+    """Build a cached answer provider for the given configuration."""
+    if provider_name != "mock":
+        raise ValueError(f"Unsupported answer provider: {provider_name}")
+    return MockAnswerProvider()
 
 
 @lru_cache
@@ -40,22 +67,35 @@ def get_text_chunker() -> TextChunker:
     return TextChunker()
 
 
-@lru_cache
-def get_embedding_provider() -> EmbeddingProvider:
+def get_file_storage(
+    settings: Settings = Depends(get_settings),
+) -> FileStorage:
+    """Return the shared file storage instance."""
+    return build_file_storage(settings.storage_backend, settings.storage_path)
+
+
+def get_embedding_provider(
+    settings: Settings = Depends(get_settings),
+) -> EmbeddingProvider:
     """Return the shared embedding provider instance."""
-    return MockEmbeddingProvider()
+    return build_embedding_provider(
+        settings.embedding_provider,
+        settings.embedding_dimension,
+    )
 
 
-@lru_cache
-def get_vector_store() -> VectorStore:
+def get_vector_store(
+    settings: Settings = Depends(get_settings),
+) -> VectorStore:
     """Return the shared vector store instance."""
-    return InMemoryVectorStore()
+    return build_vector_store(settings.vector_store_backend)
 
 
-@lru_cache
-def get_answer_provider() -> AnswerProvider:
+def get_answer_provider(
+    settings: Settings = Depends(get_settings),
+) -> AnswerProvider:
     """Return the shared answer provider instance."""
-    return MockAnswerProvider()
+    return build_answer_provider(settings.answer_provider)
 
 
 def get_metadata_service(
@@ -130,3 +170,16 @@ def get_ask_service(
         search_service=search_service,
         answer_provider=answer_provider,
     )
+
+
+def clear_dependency_caches() -> None:
+    """Clear cached settings and infrastructure instances for test isolation."""
+    from app.core.config import clear_settings_cache
+
+    clear_settings_cache()
+    build_file_storage.cache_clear()
+    build_embedding_provider.cache_clear()
+    build_vector_store.cache_clear()
+    build_answer_provider.cache_clear()
+    get_pdf_parser.cache_clear()
+    get_text_chunker.cache_clear()

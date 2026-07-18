@@ -1,6 +1,7 @@
 import pytest
 
 from app.core.exceptions import DocumentNotFoundError
+from app.infrastructure.answers.constants import INSUFFICIENT_CONTEXT_ANSWER
 from app.infrastructure.answers.mock_provider import MockAnswerProvider
 from app.modules.documents.schemas.ask import AskRequest
 from app.modules.documents.schemas.search import SearchRequest, SearchResponse, SearchResult
@@ -121,3 +122,82 @@ def test_ask_raises_when_document_not_indexed() -> None:
 
     with pytest.raises(DocumentNotFoundError):
         ask_service.ask("missing-doc", request)
+
+
+def test_ask_passes_retrieved_chunks_to_answer_provider(
+    ask_service: AskService,
+    answer_provider: RecordingAnswerProvider,
+    search_results: SearchResponse,
+) -> None:
+    request = AskRequest(question="What integrations are required?", top_k=3)
+
+    ask_service.ask("doc-123", request)
+
+    assert answer_provider.calls == [(request.question, search_results.results)]
+
+
+def test_ask_preserves_retrieved_chunk_order(
+    answer_provider: RecordingAnswerProvider,
+) -> None:
+    search_response = SearchResponse(
+        document_id="doc-123",
+        query="ordered chunks",
+        result_count=3,
+        results=[
+            SearchResult(chunk_index=2, text="third", score=0.3),
+            SearchResult(chunk_index=0, text="first", score=0.9),
+            SearchResult(chunk_index=1, text="second", score=0.6),
+        ],
+    )
+    ask_service = AskService(
+        search_service=RecordingSearchService(response=search_response),
+        answer_provider=answer_provider,
+    )
+    request = AskRequest(question="ordered chunks", top_k=3)
+
+    ask_service.ask("doc-123", request)
+
+    assert [chunk.chunk_index for chunk in answer_provider.calls[0][1]] == [2, 0, 1]
+
+
+def test_ask_does_not_invoke_provider_when_no_context_is_available() -> None:
+    search_response = SearchResponse(
+        document_id="doc-123",
+        query="empty context",
+        result_count=0,
+        results=[],
+    )
+    answer_provider = RecordingAnswerProvider()
+    ask_service = AskService(
+        search_service=RecordingSearchService(response=search_response),
+        answer_provider=answer_provider,
+    )
+    request = AskRequest(question="empty context", top_k=5)
+
+    result = ask_service.ask("doc-123", request)
+
+    assert answer_provider.calls == []
+    assert result.answer == INSUFFICIENT_CONTEXT_ANSWER
+
+
+def test_ask_returns_insufficient_context_response_when_all_chunks_are_empty() -> None:
+    search_response = SearchResponse(
+        document_id="doc-123",
+        query="blank chunks",
+        result_count=2,
+        results=[
+            SearchResult(chunk_index=0, text="   ", score=0.9),
+            SearchResult(chunk_index=1, text="", score=0.8),
+        ],
+    )
+    answer_provider = RecordingAnswerProvider()
+    ask_service = AskService(
+        search_service=RecordingSearchService(response=search_response),
+        answer_provider=answer_provider,
+    )
+    request = AskRequest(question="blank chunks", top_k=5)
+
+    result = ask_service.ask("doc-123", request)
+
+    assert answer_provider.calls == []
+    assert result.answer == INSUFFICIENT_CONTEXT_ANSWER

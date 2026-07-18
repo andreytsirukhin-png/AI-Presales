@@ -7,7 +7,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 StorageBackend = Literal["local"]
 EmbeddingProviderName = Literal["mock", "openai"]
 VectorStoreBackend = Literal["memory"]
-AnswerProviderName = Literal["mock"]
+AnswerProviderName = Literal["mock", "openai"]
 
 
 class Settings(BaseSettings):
@@ -35,6 +35,9 @@ class Settings(BaseSettings):
     vector_store_backend: VectorStoreBackend = "memory"
 
     answer_provider: AnswerProviderName = "mock"
+    openai_chat_model: str = "gpt-4.1-mini"
+    openai_temperature: float = 0.0
+    openai_max_output_tokens: int = Field(default=800, ge=1)
 
     search_default_top_k: int = Field(default=5, ge=1)
     search_max_top_k: int = Field(default=50, ge=1)

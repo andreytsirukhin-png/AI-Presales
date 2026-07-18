@@ -10,6 +10,7 @@ from app.core.dependencies import (
     get_search_service,
 )
 from app.core.exceptions import (
+    AnswerError,
     DocumentNotFoundError,
     EmbeddingError,
     EmptyPdfError,
@@ -144,4 +145,6 @@ async def ask_document(
     except ValueError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
     except EmbeddingError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    except AnswerError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc

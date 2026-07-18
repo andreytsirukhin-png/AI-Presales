@@ -1,6 +1,7 @@
+from app.infrastructure.answers.constants import INSUFFICIENT_CONTEXT_ANSWER
 from app.modules.documents.schemas.search import SearchResult
 
-FALLBACK_ANSWER = "No relevant information was found in the indexed document."
+FALLBACK_ANSWER = INSUFFICIENT_CONTEXT_ANSWER
 
 
 class MockAnswerProvider:

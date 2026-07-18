@@ -3,7 +3,7 @@ from functools import lru_cache
 from fastapi import Depends
 
 from app.core.config import Settings, get_settings
-from app.infrastructure.answers import MockAnswerProvider
+from app.infrastructure.answers import MockAnswerProvider, OpenAIAnswerProvider
 from app.infrastructure.answers.protocol import AnswerProvider
 from app.infrastructure.embeddings import MockEmbeddingProvider, OpenAIEmbeddingProvider
 from app.infrastructure.embeddings.protocol import EmbeddingProvider
@@ -59,11 +59,24 @@ def build_vector_store(backend: str) -> VectorStore:
 
 
 @lru_cache
-def build_answer_provider(provider_name: str) -> AnswerProvider:
+def build_answer_provider(
+    provider_name: str,
+    openai_api_key: str,
+    openai_chat_model: str,
+    openai_temperature: float,
+    openai_max_output_tokens: int,
+) -> AnswerProvider:
     """Build a cached answer provider for the given configuration."""
-    if provider_name != "mock":
-        raise ValueError(f"Unsupported answer provider: {provider_name}")
-    return MockAnswerProvider()
+    if provider_name == "mock":
+        return MockAnswerProvider()
+    if provider_name == "openai":
+        return OpenAIAnswerProvider(
+            api_key=openai_api_key,
+            model=openai_chat_model,
+            temperature=openai_temperature,
+            max_output_tokens=openai_max_output_tokens,
+        )
+    raise ValueError(f"Unsupported answer provider: {provider_name}")
 
 
 @lru_cache
@@ -108,7 +121,13 @@ def get_answer_provider(
     settings: Settings = Depends(get_settings),
 ) -> AnswerProvider:
     """Return the shared answer provider instance."""
-    return build_answer_provider(settings.answer_provider)
+    return build_answer_provider(
+        settings.answer_provider,
+        settings.openai_api_key,
+        settings.openai_chat_model,
+        settings.openai_temperature,
+        settings.openai_max_output_tokens,
+    )
 
 
 def get_metadata_service(

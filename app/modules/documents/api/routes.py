@@ -2,8 +2,10 @@ from fastapi import APIRouter, HTTPException
 
 from app.core.exceptions import DocumentNotFoundError, EmptyPdfError, InvalidPdfError
 from app.infrastructure.storage import LocalFileStorage
+from app.modules.documents.schemas.chunk import ChunkResponse
 from app.modules.documents.schemas.document import DocumentMetadata
 from app.modules.documents.schemas.parse import ParseResponse
+from app.modules.documents.services.chunk_service import ChunkService
 from app.modules.documents.services.metadata_service import MetadataService
 from app.modules.documents.services.parse_service import ParseService
 
@@ -11,6 +13,7 @@ router = APIRouter(prefix="/documents", tags=["documents"])
 _storage = LocalFileStorage()
 parse_service = ParseService(_storage)
 metadata_service = MetadataService(_storage)
+chunk_service = ChunkService(_storage)
 
 
 @router.get("/{document_id}", response_model=DocumentMetadata)
@@ -27,6 +30,19 @@ async def parse_document(document_id: str) -> ParseResponse:
     """Extract text from a previously uploaded PDF document."""
     try:
         return parse_service.parse(document_id)
+    except DocumentNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except InvalidPdfError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    except EmptyPdfError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+
+@router.post("/{document_id}/chunks", response_model=ChunkResponse)
+async def chunk_document(document_id: str) -> ChunkResponse:
+    """Split a previously uploaded PDF into ordered text chunks."""
+    try:
+        return chunk_service.chunk(document_id)
     except DocumentNotFoundError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     except InvalidPdfError as exc:

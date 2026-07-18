@@ -1,16 +1,20 @@
 import importlib
 from io import BytesIO
+from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
 
+from app.core.config import Settings, get_settings
 from app.core.dependencies import (
+    build_answer_provider,
+    build_embedding_provider,
+    build_file_storage,
+    build_vector_store,
+    clear_dependency_caches,
     get_answer_provider,
-    get_embedding_provider,
-    get_file_storage,
     get_pdf_parser,
     get_text_chunker,
-    get_vector_store,
 )
 from app.main import app
 from app.modules.documents.schemas.search import SearchResult
@@ -27,25 +31,81 @@ from tests.helpers.pdf import make_text_pdf
 client = TestClient(app)
 
 
+def _current_settings() -> Settings:
+    return get_settings()
+
+
 def test_shared_vector_store_instance_is_reused() -> None:
-    first = get_vector_store()
-    second = get_vector_store()
+    settings = _current_settings()
+    first = build_vector_store(settings.vector_store_backend)
+    second = build_vector_store(settings.vector_store_backend)
 
     assert first is second
 
 
 def test_shared_file_storage_instance_is_reused() -> None:
-    first = get_file_storage()
-    second = get_file_storage()
+    settings = _current_settings()
+    first = build_file_storage(settings.storage_backend, settings.storage_path)
+    second = build_file_storage(settings.storage_backend, settings.storage_path)
 
     assert first is second
 
 
+def test_storage_path_comes_from_settings() -> None:
+    settings = _current_settings()
+    storage = build_file_storage(settings.storage_backend, settings.storage_path)
+
+    assert storage._root_dir == Path(settings.storage_path)
+
+
+def test_embedding_dimension_comes_from_settings() -> None:
+    settings = _current_settings()
+    provider = build_embedding_provider(
+        settings.embedding_provider,
+        settings.embedding_dimension,
+    )
+
+    assert provider.dimension == settings.embedding_dimension
+
+
+def test_default_vector_store_is_memory() -> None:
+    settings = _current_settings()
+
+    assert settings.vector_store_backend == "memory"
+
+
+def test_default_answer_provider_is_mock() -> None:
+    settings = _current_settings()
+    provider = build_answer_provider(settings.answer_provider)
+
+    assert provider.generate_answer("question", []) is not None
+
+
+def test_different_storage_path_creates_different_cached_instance() -> None:
+    first = build_file_storage("local", "uploads")
+    second = build_file_storage("local", "./other-data")
+
+    assert first is not second
+
+
+def test_cache_reset_provides_isolation() -> None:
+    settings = _current_settings()
+    first = build_vector_store(settings.vector_store_backend)
+    clear_dependency_caches()
+    second = build_vector_store(get_settings().vector_store_backend)
+
+    assert first is not second
+
+
 def test_service_dependencies_are_resolvable() -> None:
-    storage = get_file_storage()
-    vector_store = get_vector_store()
-    embedding_provider = get_embedding_provider()
-    answer_provider = get_answer_provider()
+    settings = _current_settings()
+    storage = build_file_storage(settings.storage_backend, settings.storage_path)
+    vector_store = build_vector_store(settings.vector_store_backend)
+    embedding_provider = build_embedding_provider(
+        settings.embedding_provider,
+        settings.embedding_dimension,
+    )
+    answer_provider = build_answer_provider(settings.answer_provider)
     parser = get_pdf_parser()
     chunker = get_text_chunker()
 
@@ -146,6 +206,28 @@ def test_dependency_override_works_for_answer_provider() -> None:
         app.dependency_overrides.clear()
 
 
+def test_dependency_override_works_for_settings(tmp_path: Path) -> None:
+    override_settings = Settings(storage_path=str(tmp_path / "override-storage"))
+
+    app.dependency_overrides[get_settings] = lambda: override_settings
+    try:
+        upload_response = client.post(
+            "/api/v1/documents/upload",
+            files={
+                "file": (
+                    "rfp.pdf",
+                    BytesIO(make_text_pdf("Settings override upload")),
+                    "application/pdf",
+                )
+            },
+        )
+        assert upload_response.status_code == 200
+        document_id = upload_response.json()["document_id"]
+        assert (tmp_path / "override-storage" / f"{document_id}.pdf").is_file()
+    finally:
+        app.dependency_overrides.clear()
+
+
 def test_upload_index_search_works_through_injected_dependencies() -> None:
     upload_response = client.post(
         "/api/v1/documents/upload",
@@ -220,8 +302,17 @@ def test_shared_metadata_state_survives_across_requests() -> None:
 
 
 @pytest.mark.parametrize(
-    "provider",
-    [get_embedding_provider, get_vector_store, get_file_storage],
+    "builder",
+    [
+        lambda settings: build_file_storage(settings.storage_backend, settings.storage_path),
+        lambda settings: build_embedding_provider(
+            settings.embedding_provider,
+            settings.embedding_dimension,
+        ),
+        lambda settings: build_vector_store(settings.vector_store_backend),
+        lambda settings: build_answer_provider(settings.answer_provider),
+    ],
 )
-def test_infrastructure_providers_are_cached_singletons(provider) -> None:
-    assert provider() is provider()
+def test_infrastructure_builders_are_cached_singletons(builder) -> None:
+    settings = _current_settings()
+    assert builder(settings) is builder(settings)

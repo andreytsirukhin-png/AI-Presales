@@ -1,13 +1,11 @@
 import pytest
 
-from tests.helpers.pdf import make_blank_pdf, make_text_pdf
+from app.core.dependencies import clear_dependency_caches
 
 
-@pytest.fixture
-def text_pdf() -> bytes:
-    return make_text_pdf()
-
-
-@pytest.fixture
-def blank_pdf() -> bytes:
-    return make_blank_pdf()
+@pytest.fixture(autouse=True)
+def reset_dependency_caches() -> None:
+    """Reset cached settings and infrastructure between tests."""
+    clear_dependency_caches()
+    yield
+    clear_dependency_caches()

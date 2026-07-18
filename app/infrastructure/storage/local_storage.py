@@ -12,3 +12,14 @@ class LocalFileStorage:
         destination = self._root_dir / relative_path
         destination.parent.mkdir(parents=True, exist_ok=True)
         destination.write_bytes(content)
+
+    def load(self, relative_path: str) -> bytes:
+        """Read content from disk.
+
+        Raises:
+            FileNotFoundError: If the relative path does not exist.
+        """
+        source = self._root_dir / relative_path
+        if not source.is_file():
+            raise FileNotFoundError(relative_path)
+        return source.read_bytes()

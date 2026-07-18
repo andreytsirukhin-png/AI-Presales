@@ -3,6 +3,7 @@ from pathlib import Path
 import pytest
 
 from app.core.exceptions import FileTooLargeError, UnsupportedFileTypeError
+from app.modules.documents.schemas.document import DocumentMetadata
 from app.services.upload_service import UploadService
 
 PDF_CONTENT = b"%PDF-1.4 minimal test content"
@@ -13,6 +14,7 @@ class FakeFileStorage:
 
     def __init__(self) -> None:
         self.saved_files: dict[str, bytes] = {}
+        self.metadata: dict[str, DocumentMetadata] = {}
 
     def save(self, relative_path: str, content: bytes) -> None:
         self.saved_files[relative_path] = content
@@ -22,6 +24,15 @@ class FakeFileStorage:
             return self.saved_files[relative_path]
         except KeyError as exc:
             raise FileNotFoundError(relative_path) from exc
+
+    def save_metadata(self, metadata: DocumentMetadata) -> None:
+        self.metadata[metadata.document_id] = metadata
+
+    def get_metadata(self, document_id: str) -> DocumentMetadata:
+        try:
+            return self.metadata[document_id]
+        except KeyError as exc:
+            raise FileNotFoundError(document_id) from exc
 
 
 @pytest.fixture
@@ -35,7 +46,7 @@ def upload_service(storage: FakeFileStorage) -> UploadService:
 
 
 def test_upload_pdf_returns_expected_response(upload_service: UploadService, storage: FakeFileStorage) -> None:
-    result = upload_service.upload("proposal.pdf", PDF_CONTENT)
+    result = upload_service.upload("proposal.pdf", PDF_CONTENT, content_type="application/pdf")
 
     assert result.status == "uploaded"
     assert result.filename == "proposal.pdf"
@@ -44,6 +55,14 @@ def test_upload_pdf_returns_expected_response(upload_service: UploadService, sto
     saved_path = next(iter(storage.saved_files))
     assert saved_path.endswith(".pdf")
     assert storage.saved_files[saved_path] == PDF_CONTENT
+    metadata = storage.metadata[result.document_id]
+    assert metadata.status == "uploaded"
+    assert metadata.filename == "proposal.pdf"
+    assert metadata.content_type == "application/pdf"
+    assert metadata.size_bytes == len(PDF_CONTENT)
+    assert metadata.page_count is None
+    assert metadata.characters is None
+    assert metadata.created_at.tzinfo is not None
 
 
 def test_upload_rejects_non_pdf_extension(upload_service: UploadService) -> None:

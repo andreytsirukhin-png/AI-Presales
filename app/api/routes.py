@@ -18,7 +18,11 @@ upload_service = UploadService(_storage)
 async def upload_document(file: UploadFile = File(...)) -> UploadResponse:
     content = await file.read()
     try:
-        return upload_service.upload(file.filename, content)
+        return upload_service.upload(
+            file.filename,
+            content,
+            content_type=file.content_type,
+        )
     except UnsupportedFileTypeError as exc:
         raise HTTPException(status_code=415, detail=str(exc)) from exc
     except FileTooLargeError as exc:

@@ -2,11 +2,24 @@ from fastapi import APIRouter, HTTPException
 
 from app.core.exceptions import DocumentNotFoundError, EmptyPdfError, InvalidPdfError
 from app.infrastructure.storage import LocalFileStorage
+from app.modules.documents.schemas.document import DocumentMetadata
 from app.modules.documents.schemas.parse import ParseResponse
+from app.modules.documents.services.metadata_service import MetadataService
 from app.modules.documents.services.parse_service import ParseService
 
 router = APIRouter(prefix="/documents", tags=["documents"])
-parse_service = ParseService(LocalFileStorage())
+_storage = LocalFileStorage()
+parse_service = ParseService(_storage)
+metadata_service = MetadataService(_storage)
+
+
+@router.get("/{document_id}", response_model=DocumentMetadata)
+async def get_document_metadata(document_id: str) -> DocumentMetadata:
+    """Return stored metadata for a previously uploaded document."""
+    try:
+        return metadata_service.get(document_id)
+    except DocumentNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
 
 
 @router.post("/{document_id}/parse", response_model=ParseResponse)

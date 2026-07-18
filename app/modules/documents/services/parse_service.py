@@ -27,11 +27,18 @@ class ParseService:
             Parsed document metadata and extracted text.
 
         Raises:
-            DocumentNotFoundError: If no file exists for the given identifier.
+            DocumentNotFoundError: If the document or its metadata does not exist.
             InvalidPdfError: If the stored file is not a readable PDF.
             EmptyPdfError: If the PDF contains no extractable text.
         """
         storage_path = f"{document_id}{PDF_EXTENSION}"
+
+        try:
+            metadata = self._storage.get_metadata(document_id)
+        except FileNotFoundError as exc:
+            raise DocumentNotFoundError(
+                f"Document not found: {document_id}"
+            ) from exc
 
         try:
             content = self._storage.load(storage_path)
@@ -41,6 +48,16 @@ class ParseService:
             ) from exc
 
         parsed = self._parser.parse(content)
+
+        self._storage.save_metadata(
+            metadata.model_copy(
+                update={
+                    "status": "parsed",
+                    "page_count": parsed.page_count,
+                    "characters": parsed.characters,
+                }
+            )
+        )
 
         return ParseResponse(
             document_id=document_id,

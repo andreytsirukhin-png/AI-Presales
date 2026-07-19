@@ -39,11 +39,11 @@ See [docs/architecture.md](docs/architecture.md) for layered design, dependency 
 - In-memory vector search per document
 - RAG question answering with retrieved source chunks
 - Presales analysis dashboard (seven preset analyses via `/ask`)
-- Pluggable embedding providers: **mock**, **OpenAI**
+- Pluggable embedding providers: **mock**, **OpenAI**, **Ollama**
 - Pluggable answer providers: **mock**, **OpenAI**, **OpenRouter**
 - Platform status API for runtime provider metadata
 - Interactive OpenAPI docs at `/docs`
-- 250 automated tests with isolated configuration
+- 260 automated tests with isolated configuration
 
 ## Technology stack
 
@@ -109,10 +109,13 @@ Settings use the `AI_PRESALES_` prefix. Backend variables are defined in `app/co
 | `AI_PRESALES_DEBUG` | `false` | FastAPI debug mode |
 | `AI_PRESALES_STORAGE_BACKEND` | `local` | File storage backend |
 | `AI_PRESALES_STORAGE_PATH` | `uploads` | Directory for uploaded PDFs and metadata |
-| `AI_PRESALES_EMBEDDING_PROVIDER` | `mock` | `mock` or `openai` |
-| `AI_PRESALES_EMBEDDING_DIMENSION` | `16` | Vector dimension (1536 for OpenAI embeddings) |
+| `AI_PRESALES_EMBEDDING_PROVIDER` | `mock` | `mock`, `openai`, or `ollama` |
+| `AI_PRESALES_EMBEDDING_DIMENSION` | `16` | Vector dimension (1536 for OpenAI; 768 for `nomic-embed-text`) |
 | `AI_PRESALES_OPENAI_API_KEY` | *(empty)* | Required when using OpenAI embeddings or answers |
 | `AI_PRESALES_OPENAI_EMBEDDING_MODEL` | `text-embedding-3-small` | OpenAI embedding model |
+| `AI_PRESALES_OLLAMA_BASE_URL` | `http://localhost:11434` | Ollama server base URL |
+| `AI_PRESALES_OLLAMA_EMBEDDING_MODEL` | `nomic-embed-text` | Ollama embedding model |
+| `AI_PRESALES_OLLAMA_TIMEOUT_SECONDS` | `30` | HTTP timeout for Ollama embed requests |
 | `AI_PRESALES_VECTOR_STORE_BACKEND` | `memory` | Vector store backend |
 | `AI_PRESALES_ANSWER_PROVIDER` | `mock` | `mock`, `openai`, or `openrouter` |
 | `AI_PRESALES_OPENAI_CHAT_MODEL` | `gpt-4.1-mini` | OpenAI chat model |
@@ -158,6 +161,16 @@ AI_PRESALES_EMBEDDING_DIMENSION=16
 AI_PRESALES_ANSWER_PROVIDER=openrouter
 AI_PRESALES_OPENROUTER_API_KEY=your-key
 AI_PRESALES_OPENROUTER_CHAT_MODEL=openrouter/free
+```
+
+**Ollama embeddings (local):**
+
+```env
+AI_PRESALES_EMBEDDING_PROVIDER=ollama
+AI_PRESALES_EMBEDDING_DIMENSION=768
+AI_PRESALES_OLLAMA_BASE_URL=http://localhost:11434
+AI_PRESALES_OLLAMA_EMBEDDING_MODEL=nomic-embed-text
+AI_PRESALES_OLLAMA_TIMEOUT_SECONDS=30
 ```
 
 Provider details: [docs/providers.md](docs/providers.md)
@@ -219,7 +232,7 @@ See [docs/testing.md](docs/testing.md) for test layout and isolation behavior.
 
 | Capability | Providers |
 | --- | --- |
-| Embeddings | `mock`, `openai` |
+| Embeddings | `mock`, `openai`, `ollama` |
 | Answers | `mock`, `openai`, `openrouter` |
 | Vector store | `memory` |
 | File storage | `local` |

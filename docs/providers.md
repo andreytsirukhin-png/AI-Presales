@@ -6,7 +6,7 @@ The platform isolates AI integrations behind small protocols. API routes and ser
 
 | Type | Protocol | Implementations |
 | --- | --- | --- |
-| Embeddings | `EmbeddingProvider` | `mock`, `openai` |
+| Embeddings | `EmbeddingProvider` | `mock`, `openai`, `ollama` |
 | Answers | `AnswerProvider` | `mock`, `openai`, `openrouter` |
 
 Protocols live in:
@@ -110,6 +110,29 @@ AI_PRESALES_EMBEDDING_DIMENSION=1536
 - Calls OpenAI embedding API for each chunk and search query.
 - Requires a valid API key and matching embedding dimension.
 
+## Ollama embedding provider
+
+**Module:** `app/infrastructure/embeddings/ollama_provider.py`
+
+**Configuration:**
+
+```env
+AI_PRESALES_EMBEDDING_PROVIDER=ollama
+AI_PRESALES_EMBEDDING_DIMENSION=768
+AI_PRESALES_OLLAMA_BASE_URL=http://localhost:11434
+AI_PRESALES_OLLAMA_EMBEDDING_MODEL=nomic-embed-text
+AI_PRESALES_OLLAMA_TIMEOUT_SECONDS=30
+```
+
+**Behavior:**
+
+- Calls `POST /api/embed` on a local or remote Ollama server via `httpx`.
+- Supports single-string and batched `input` payloads in one request.
+- Skips blank texts and returns zero vectors for empty inputs (same pattern as OpenAI provider).
+- Raises `EmbeddingProviderError` on HTTP or response format failures.
+- Raises `InvalidEmbeddingDimensionError` when vector size does not match `AI_PRESALES_EMBEDDING_DIMENSION`.
+- Set `AI_PRESALES_EMBEDDING_DIMENSION` to match your Ollama model (768 for `nomic-embed-text`).
+
 ## Dependency injection
 
 Provider selection is centralized in `app/core/dependencies.py`.
@@ -130,7 +153,7 @@ Factory functions:
 
 | Function | Selects |
 | --- | --- |
-| `build_embedding_provider()` | `MockEmbeddingProvider` or `OpenAIEmbeddingProvider` |
+| `build_embedding_provider()` | `MockEmbeddingProvider`, `OpenAIEmbeddingProvider`, or `OllamaEmbeddingProvider` |
 | `build_answer_provider()` | `MockAnswerProvider`, `OpenAIAnswerProvider`, or `OpenRouterAnswerProvider` |
 
 FastAPI injects providers into services through `Depends(get_embedding_provider)` and `Depends(get_answer_provider)`.
@@ -147,6 +170,9 @@ All variables below are backend settings in `app/core/config.py` (prefix `AI_PRE
 | `AI_PRESALES_EMBEDDING_DIMENSION` | Mock/OpenAI embedding dimension |
 | `AI_PRESALES_OPENAI_API_KEY` | OpenAI embeddings and answers |
 | `AI_PRESALES_OPENAI_EMBEDDING_MODEL` | OpenAI embeddings |
+| `AI_PRESALES_OLLAMA_BASE_URL` | Ollama embeddings |
+| `AI_PRESALES_OLLAMA_EMBEDDING_MODEL` | Ollama embeddings |
+| `AI_PRESALES_OLLAMA_TIMEOUT_SECONDS` | Ollama embeddings |
 | `AI_PRESALES_ANSWER_PROVIDER` | Answer factory |
 | `AI_PRESALES_OPENAI_CHAT_MODEL` | OpenAI answers; status API |
 | `AI_PRESALES_OPENAI_TEMPERATURE` | OpenAI and OpenRouter answers |
@@ -197,6 +223,9 @@ Follow the same pattern using `EmbeddingProvider` in `app/infrastructure/embeddi
 | Mock answer | `tests/unit/infrastructure/test_mock_answer_provider.py` |
 | OpenAI answer | `tests/unit/infrastructure/test_openai_answer_provider.py` |
 | OpenRouter answer | `tests/unit/infrastructure/test_openrouter_answer_provider.py` |
+| Mock embedding | `tests/unit/infrastructure/test_mock_embedding_provider.py` |
+| OpenAI embedding | `tests/unit/infrastructure/test_openai_embedding_provider.py` |
+| Ollama embedding | `tests/unit/infrastructure/test_ollama_embedding_provider.py` |
 | DI wiring | `tests/unit/core/test_answer_dependencies.py` |
 | API integration | `tests/integration/api/test_openai_answer_api.py`, `test_ask_api.py` |
 

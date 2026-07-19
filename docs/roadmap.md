@@ -10,6 +10,7 @@ Implementation status for the AI Presales platform. Updated to reflect the curre
 - ✅ Embeddings abstraction (`EmbeddingProvider` protocol)
 - ✅ Mock embedding provider
 - ✅ OpenAI embedding provider
+- ✅ Ollama embedding provider
 - ✅ Vector search (in-memory cosine similarity)
 - ✅ Indexing (per-document vector store)
 - ✅ RAG ask endpoint (`POST /documents/{id}/ask`)
@@ -23,7 +24,7 @@ Implementation status for the AI Presales platform. Updated to reflect the curre
 - ✅ Custom Q&A in Streamlit
 - ✅ Source chunk display in UI
 - ✅ Demo run script (`scripts/run_demo.sh`)
-- ✅ Unit and integration tests (250 tests)
+- ✅ Unit and integration tests (260 tests)
 - ✅ Test isolation from developer `.env`
 - ✅ OpenAPI interactive docs
 - ✅ Legacy structured demo endpoint (`POST /api/v1/analysis/demo`)
@@ -31,7 +32,7 @@ Implementation status for the AI Presales platform. Updated to reflect the curre
 ## Planned
 
 - ⬜ Real embeddings persistence (survive restarts)
-- ⬜ Ollama provider
+- ⬜ Ollama answer provider
 - ⬜ Inline citations with page numbers
 - ⬜ Multi-document search
 - ⬜ Authentication and authorization

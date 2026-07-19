@@ -43,7 +43,7 @@ curl -s http://localhost:8000/health
 | Field | Type | Description |
 | --- | --- | --- |
 | `status` | string | Always `"ok"` when the endpoint succeeds |
-| `embedding_provider` | string | Active embedding provider (`mock`, `openai`) |
+| `embedding_provider` | string | Active embedding provider (`mock`, `openai`, `ollama`) |
 | `answer_provider` | string | Active answer provider (`mock`, `openai`, `openrouter`) |
 | `answer_model` | string | Model id for the active answer provider |
 | `app_environment` | string | Value of `AI_PRESALES_APP_ENVIRONMENT` |

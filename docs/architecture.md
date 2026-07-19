@@ -32,7 +32,7 @@ flowchart TB
     subgraph Infrastructure
         Storage["LocalFileStorage"]
         VectorStore["InMemoryVectorStore"]
-        EmbProviders["Embedding Providers<br/>mock · openai"]
+        EmbProviders["Embedding Providers<br/>mock · openai · ollama"]
         AnsProviders["Answer Providers<br/>mock · openai · openrouter"]
     end
 
@@ -132,7 +132,7 @@ Infrastructure is built through cached factory functions in `app/core/dependenci
 | Factory | Produces |
 | --- | --- |
 | `build_file_storage()` | `LocalFileStorage` |
-| `build_embedding_provider()` | `MockEmbeddingProvider` or `OpenAIEmbeddingProvider` |
+| `build_embedding_provider()` | `MockEmbeddingProvider`, `OpenAIEmbeddingProvider`, or `OllamaEmbeddingProvider` |
 | `build_vector_store()` | `InMemoryVectorStore` |
 | `build_answer_provider()` | `MockAnswerProvider`, `OpenAIAnswerProvider`, or `OpenRouterAnswerProvider` |
 

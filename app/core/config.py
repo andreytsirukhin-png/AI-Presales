@@ -5,7 +5,7 @@ from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 StorageBackend = Literal["local"]
-EmbeddingProviderName = Literal["mock", "openai"]
+EmbeddingProviderName = Literal["mock", "openai", "ollama"]
 VectorStoreBackend = Literal["memory"]
 AnswerProviderName = Literal["mock", "openai", "openrouter"]
 
@@ -31,6 +31,9 @@ class Settings(BaseSettings):
     embedding_dimension: int = Field(default=16, ge=1)
     openai_api_key: str = ""
     openai_embedding_model: str = "text-embedding-3-small"
+    ollama_base_url: str = "http://localhost:11434"
+    ollama_embedding_model: str = "nomic-embed-text"
+    ollama_timeout_seconds: float = Field(default=30.0, ge=1)
 
     vector_store_backend: VectorStoreBackend = "memory"
 

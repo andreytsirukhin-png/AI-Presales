@@ -9,7 +9,11 @@ from app.infrastructure.answers import (
     OpenRouterAnswerProvider,
 )
 from app.infrastructure.answers.protocol import AnswerProvider
-from app.infrastructure.embeddings import MockEmbeddingProvider, OpenAIEmbeddingProvider
+from app.infrastructure.embeddings import (
+    MockEmbeddingProvider,
+    OllamaEmbeddingProvider,
+    OpenAIEmbeddingProvider,
+)
 from app.infrastructure.embeddings.protocol import EmbeddingProvider
 from app.infrastructure.storage import LocalFileStorage
 from app.infrastructure.storage.protocol import FileStorage
@@ -41,6 +45,9 @@ def build_embedding_provider(
     dimension: int,
     openai_api_key: str,
     openai_embedding_model: str,
+    ollama_base_url: str = "http://localhost:11434",
+    ollama_embedding_model: str = "nomic-embed-text",
+    ollama_timeout_seconds: float = 30.0,
 ) -> EmbeddingProvider:
     """Build a cached embedding provider for the given configuration."""
     if provider_name == "mock":
@@ -50,6 +57,13 @@ def build_embedding_provider(
             api_key=openai_api_key,
             model=openai_embedding_model,
             dimension=dimension,
+        )
+    if provider_name == "ollama":
+        return OllamaEmbeddingProvider(
+            base_url=ollama_base_url,
+            model=ollama_embedding_model,
+            dimension=dimension,
+            timeout_seconds=ollama_timeout_seconds,
         )
     raise ValueError(f"Unsupported embedding provider: {provider_name}")
 
@@ -122,6 +136,9 @@ def get_embedding_provider(
         settings.embedding_dimension,
         settings.openai_api_key,
         settings.openai_embedding_model,
+        settings.ollama_base_url,
+        settings.ollama_embedding_model,
+        settings.ollama_timeout_seconds,
     )
 
 

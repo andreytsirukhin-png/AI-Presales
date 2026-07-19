@@ -7,7 +7,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 StorageBackend = Literal["local"]
 EmbeddingProviderName = Literal["mock", "openai"]
 VectorStoreBackend = Literal["memory"]
-AnswerProviderName = Literal["mock", "openai"]
+AnswerProviderName = Literal["mock", "openai", "openrouter"]
 
 
 class Settings(BaseSettings):
@@ -38,6 +38,9 @@ class Settings(BaseSettings):
     openai_chat_model: str = "gpt-4.1-mini"
     openai_temperature: float = 0.0
     openai_max_output_tokens: int = Field(default=800, ge=1)
+    openrouter_api_key: str = ""
+    openrouter_base_url: str = "https://openrouter.ai/api/v1"
+    openrouter_chat_model: str = "openrouter/free"
 
     search_default_top_k: int = Field(default=5, ge=1)
     search_max_top_k: int = Field(default=50, ge=1)

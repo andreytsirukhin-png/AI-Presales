@@ -159,6 +159,9 @@ def test_openai_provider_build_requires_api_key_via_dependency_override() -> Non
                 override_settings.openai_chat_model,
                 override_settings.openai_temperature,
                 override_settings.openai_max_output_tokens,
+                override_settings.openrouter_api_key,
+                override_settings.openrouter_base_url,
+                override_settings.openrouter_chat_model,
             )
         assert "OpenAI API key is required" in str(exc_info.value)
     finally:

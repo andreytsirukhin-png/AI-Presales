@@ -3,7 +3,11 @@ from functools import lru_cache
 from fastapi import Depends
 
 from app.core.config import Settings, get_settings
-from app.infrastructure.answers import MockAnswerProvider, OpenAIAnswerProvider
+from app.infrastructure.answers import (
+    MockAnswerProvider,
+    OpenAIAnswerProvider,
+    OpenRouterAnswerProvider,
+)
 from app.infrastructure.answers.protocol import AnswerProvider
 from app.infrastructure.embeddings import MockEmbeddingProvider, OpenAIEmbeddingProvider
 from app.infrastructure.embeddings.protocol import EmbeddingProvider
@@ -65,6 +69,9 @@ def build_answer_provider(
     openai_chat_model: str,
     openai_temperature: float,
     openai_max_output_tokens: int,
+    openrouter_api_key: str,
+    openrouter_base_url: str,
+    openrouter_chat_model: str,
 ) -> AnswerProvider:
     """Build a cached answer provider for the given configuration."""
     if provider_name == "mock":
@@ -73,6 +80,14 @@ def build_answer_provider(
         return OpenAIAnswerProvider(
             api_key=openai_api_key,
             model=openai_chat_model,
+            temperature=openai_temperature,
+            max_output_tokens=openai_max_output_tokens,
+        )
+    if provider_name == "openrouter":
+        return OpenRouterAnswerProvider(
+            api_key=openrouter_api_key,
+            base_url=openrouter_base_url,
+            model=openrouter_chat_model,
             temperature=openai_temperature,
             max_output_tokens=openai_max_output_tokens,
         )
@@ -127,6 +142,9 @@ def get_answer_provider(
         settings.openai_chat_model,
         settings.openai_temperature,
         settings.openai_max_output_tokens,
+        settings.openrouter_api_key,
+        settings.openrouter_base_url,
+        settings.openrouter_chat_model,
     )
 
 

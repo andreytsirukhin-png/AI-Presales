@@ -84,6 +84,9 @@ def test_default_answer_provider_is_mock() -> None:
         settings.openai_chat_model,
         settings.openai_temperature,
         settings.openai_max_output_tokens,
+        settings.openrouter_api_key,
+        settings.openrouter_base_url,
+        settings.openrouter_chat_model,
     )
 
     assert provider.generate_answer("question", []) is not None
@@ -121,6 +124,9 @@ def test_service_dependencies_are_resolvable() -> None:
         settings.openai_chat_model,
         settings.openai_temperature,
         settings.openai_max_output_tokens,
+        settings.openrouter_api_key,
+        settings.openrouter_base_url,
+        settings.openrouter_chat_model,
     )
     parser = get_pdf_parser()
     chunker = get_text_chunker()
@@ -334,6 +340,9 @@ def test_shared_metadata_state_survives_across_requests() -> None:
             settings.openai_chat_model,
             settings.openai_temperature,
             settings.openai_max_output_tokens,
+            settings.openrouter_api_key,
+            settings.openrouter_base_url,
+            settings.openrouter_chat_model,
         ),
     ],
 )

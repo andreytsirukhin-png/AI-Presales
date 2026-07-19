@@ -30,6 +30,9 @@ def test_settings_default_values() -> None:
     assert settings.openai_chat_model == "gpt-4.1-mini"
     assert settings.openai_temperature == 0.0
     assert settings.openai_max_output_tokens == 800
+    assert settings.openrouter_api_key == ""
+    assert settings.openrouter_base_url == "https://openrouter.ai/api/v1"
+    assert settings.openrouter_chat_model == "openrouter/free"
     assert settings.search_default_top_k == 5
     assert settings.search_max_top_k == 50
 
@@ -107,6 +110,22 @@ def test_settings_parses_openai_answer_environment_values(
     assert settings.openai_max_output_tokens == 1024
 
 
+def test_settings_parses_openrouter_answer_environment_values(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("AI_PRESALES_ANSWER_PROVIDER", "openrouter")
+    monkeypatch.setenv("AI_PRESALES_OPENROUTER_API_KEY", "router-key")
+    monkeypatch.setenv("AI_PRESALES_OPENROUTER_BASE_URL", "https://example.openrouter/api/v1")
+    monkeypatch.setenv("AI_PRESALES_OPENROUTER_CHAT_MODEL", "anthropic/claude-3.5-sonnet")
+
+    settings = Settings()
+
+    assert settings.answer_provider == "openrouter"
+    assert settings.openrouter_api_key == "router-key"
+    assert settings.openrouter_base_url == "https://example.openrouter/api/v1"
+    assert settings.openrouter_chat_model == "anthropic/claude-3.5-sonnet"
+
+
 def test_get_settings_is_cached() -> None:
     first = get_settings()
     second = get_settings()
@@ -114,7 +133,7 @@ def test_get_settings_is_cached() -> None:
     assert first is second
 
 
-def test_settings_loads_from_dotenv_file(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_settings_loads_from_dotenv_file(tmp_path: Path) -> None:
     env_file = tmp_path / ".env"
     env_file.write_text(
         "\n".join(
@@ -126,12 +145,8 @@ def test_settings_loads_from_dotenv_file(tmp_path: Path, monkeypatch: pytest.Mon
         ),
         encoding="utf-8",
     )
-    monkeypatch.chdir(tmp_path)
-    monkeypatch.delenv("AI_PRESALES_APP_NAME", raising=False)
-    monkeypatch.delenv("AI_PRESALES_DEBUG", raising=False)
-    monkeypatch.delenv("AI_PRESALES_EMBEDDING_DIMENSION", raising=False)
 
-    settings = Settings()
+    settings = Settings(_env_file=env_file)
 
     assert settings.app_name == "Dotenv Presales"
     assert settings.debug is True

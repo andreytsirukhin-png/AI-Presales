@@ -1,7 +1,8 @@
 from app.infrastructure.answers.constants import INSUFFICIENT_CONTEXT_ANSWER
 from app.infrastructure.answers.protocol import AnswerProvider
 from app.modules.documents.schemas.ask import AnswerSource, AskRequest, AskResponse
-from app.modules.documents.schemas.search import SearchRequest, SearchResult
+from app.modules.documents.schemas.search import SearchRequest
+from app.modules.documents.services.context import has_usable_context
 from app.modules.documents.services.search_service import SearchService
 
 
@@ -34,7 +35,7 @@ class AskService:
             document_id,
             SearchRequest(query=request.question, top_k=request.top_k),
         )
-        if not _has_usable_context(search_response.results):
+        if not has_usable_context(search_response.results):
             answer = INSUFFICIENT_CONTEXT_ANSWER
         else:
             answer = self._answer_provider.generate_answer(
@@ -57,8 +58,3 @@ class AskService:
             sources=sources,
             status="answered",
         )
-
-
-def _has_usable_context(context_chunks: list[SearchResult]) -> bool:
-    """Return True when at least one retrieved chunk contains non-empty text."""
-    return any(chunk.text.strip() for chunk in context_chunks)

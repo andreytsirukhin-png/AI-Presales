@@ -56,21 +56,38 @@ def run_analysis_for_label(
     results: dict[str, dict[str, Any]],
     errors: dict[str, str],
     base_url: str,
-    document_id: str,
     top_k: int,
     timeout: float,
-    ask_fn: Callable[..., dict[str, Any]] = run_preset_analysis,
+    project_id: str | None = None,
+    document_id: str | None = None,
+    ask_fn: Callable[..., dict[str, Any]] | None = None,
 ) -> tuple[dict[str, dict[str, Any]], dict[str, str]]:
     """Run one preset analysis and return updated result/error state."""
+    from ui.api_client import run_preset_analysis, run_preset_project_analysis
+
     prompt = get_analysis_prompt(label)
+    if ask_fn is None:
+        ask_fn = run_preset_project_analysis if project_id else run_preset_analysis
+    scope_id = project_id or document_id
+    if scope_id is None:
+        return results, store_analysis_error(errors, label, "No project or document selected.")
     try:
-        payload = ask_fn(
-            base_url,
-            document_id,
-            prompt=prompt,
-            top_k=top_k,
-            timeout=timeout,
-        )
+        if project_id:
+            payload = ask_fn(
+                base_url,
+                project_id,
+                prompt=prompt,
+                top_k=top_k,
+                timeout=timeout,
+            )
+        else:
+            payload = ask_fn(
+                base_url,
+                scope_id,
+                prompt=prompt,
+                top_k=top_k,
+                timeout=timeout,
+            )
     except (BackendUnavailableError, ApiClientError) as exc:
         return results, store_analysis_error(errors, label, format_api_error(exc))
 

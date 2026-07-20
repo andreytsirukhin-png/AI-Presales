@@ -133,10 +133,24 @@ Indexed chunks carry `SourceMetadata` from upload through search and ask:
 | `page_number` | PDF page reference when chunking can infer it |
 | `chunk_id` / `chunk_index` | Stable chunk identity in the vector store |
 | `embedding_model` / `created_at` | Index-time audit fields |
+| `project_id` / `project_name` | Workspace scope for multi-document retrieval |
 
-Metadata is attached at embedding time (`EmbeddingService`), stored in ChromaDB via `metadata_to_chroma`, and returned on `SearchResult.metadata`. Answer providers receive formatted source blocks from `app/infrastructure/answers/prompts.py` (document, page, chunk, content). Citations are derived in `app/modules/documents/services/citations.py` without changing vector-store interfaces.
+Metadata is attached at embedding time (`EmbeddingService`), stored in ChromaDB via `metadata_to_chroma`, and returned on `SearchResult.metadata`. Answer providers receive formatted source blocks from `app/infrastructure/answers/prompts.py` (document, project, page, chunk, content). Citations are derived in `app/modules/documents/services/citations.py` without changing vector-store interfaces.
 
-Preset Streamlit analyses use the same `/ask` endpoint with prompts from `ui/prompts.py`.
+## Project workspace (US-017)
+
+Projects group multiple PDFs under one analysis scope:
+
+```text
+Project → Documents → Chunks → Embeddings → Vector store
+```
+
+- Project metadata lives in `uploads/projects/{project_id}.project.json`.
+- `POST /api/v1/projects/{id}/documents` uploads a PDF and runs parse → chunk → embed → index automatically.
+- `POST /api/v1/projects/{id}/search` and `/ask` retrieve ranked chunks across all indexed documents in the project via `VectorStore.search_documents`.
+- Legacy single-document endpoints under `/api/v1/documents/{document_id}/*` remain available.
+
+The Streamlit UI uses project-scoped `/ask` for analyses and Q&A.
 
 ## Dependency injection
 

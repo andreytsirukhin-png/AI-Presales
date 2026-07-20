@@ -11,10 +11,15 @@ from ui.analysis_handlers import (
 from ui.api_client import (
     ApiClientError,
     BackendUnavailableError,
-    ask_question,
+    ask_project,
     check_health,
+    create_project,
+    delete_project_document,
     get_platform_status,
-    process_document,
+    get_project_statistics,
+    list_project_documents,
+    list_projects,
+    upload_project_document,
 )
 from ui.config import UiSettings, apply_backend_status, get_ui_settings
 from ui.prompts import ANALYSIS_LABELS
@@ -22,11 +27,10 @@ from ui.prompts import ANALYSIS_LABELS
 
 def _init_session_state() -> None:
     defaults = {
-        "document_id": None,
-        "filename": None,
-        "file_size": None,
-        "chunk_count": None,
-        "processing_status": "Not started",
+        "project_id": None,
+        "project_name": None,
+        "project_stats": None,
+        "project_documents": [],
         "analysis_results": {},
         "analysis_errors": {},
         "last_question": "",
@@ -35,16 +39,6 @@ def _init_session_state() -> None:
     for key, value in defaults.items():
         if key not in st.session_state:
             st.session_state[key] = value
-
-
-def _format_bytes(size_bytes: int | None) -> str:
-    if size_bytes is None:
-        return "Unknown"
-    if size_bytes < 1024:
-        return f"{size_bytes} B"
-    if size_bytes < 1024 * 1024:
-        return f"{size_bytes / 1024:.1f} KB"
-    return f"{size_bytes / (1024 * 1024):.1f} MB"
 
 
 def _render_sources(sources: list[dict[str, object]]) -> None:
@@ -71,8 +65,22 @@ def _render_sources(sources: list[dict[str, object]]) -> None:
             st.write(text)
 
 
+def _refresh_project_state(settings: UiSettings, project_id: str) -> None:
+    st.session_state.project_stats = get_project_statistics(
+        settings.api_base_url,
+        project_id,
+        timeout=settings.request_timeout_seconds,
+    )
+    documents_payload = list_project_documents(
+        settings.api_base_url,
+        project_id,
+        timeout=settings.request_timeout_seconds,
+    )
+    st.session_state.project_documents = documents_payload.get("documents", [])
+
+
 def _render_sidebar(settings: UiSettings) -> None:
-    st.sidebar.header("Session")
+    st.sidebar.header("Project Workspace")
     st.sidebar.write(f"Backend URL: `{settings.api_base_url}`")
 
     display_settings = settings
@@ -85,24 +93,94 @@ def _render_sidebar(settings: UiSettings) -> None:
         st.sidebar.success("Backend connected")
     except BackendUnavailableError:
         st.sidebar.error("Backend unavailable. Start FastAPI on port 8000.")
+        return
     except ApiClientError as exc:
         st.sidebar.error(str(exc))
+        return
+
+    with st.sidebar.form("create_project_form"):
+        new_name = st.text_input("New project name", value="RFP Workspace")
+        new_description = st.text_area("Description", value="")
+        if st.form_submit_button("Create Project"):
+            try:
+                created = create_project(
+                    settings.api_base_url,
+                    project_name=new_name.strip(),
+                    description=new_description.strip(),
+                    timeout=settings.request_timeout_seconds,
+                )
+            except (BackendUnavailableError, ApiClientError) as exc:
+                st.sidebar.error(str(exc))
+            else:
+                st.session_state.project_id = created["project_id"]
+                st.session_state.project_name = created["project_name"]
+                st.session_state.analysis_results = {}
+                st.session_state.analysis_errors = {}
+                st.session_state.last_answer = None
+                _refresh_project_state(settings, created["project_id"])
+
+    try:
+        projects_payload = list_projects(settings.api_base_url, timeout=5.0)
+    except (BackendUnavailableError, ApiClientError):
+        projects_payload = {"projects": []}
+
+    project_options = {
+        project["project_name"]: project["project_id"]
+        for project in projects_payload.get("projects", [])
+    }
+    if project_options:
+        selected_name = st.sidebar.selectbox(
+            "Switch Project",
+            options=list(project_options.keys()),
+            index=(
+                list(project_options.values()).index(st.session_state.project_id)
+                if st.session_state.project_id in project_options.values()
+                else 0
+            ),
+        )
+        selected_id = project_options[selected_name]
+        if selected_id != st.session_state.project_id:
+            st.session_state.project_id = selected_id
+            st.session_state.project_name = selected_name
+            st.session_state.analysis_results = {}
+            st.session_state.analysis_errors = {}
+            st.session_state.last_answer = None
+        if st.session_state.project_id:
+            _refresh_project_state(settings, st.session_state.project_id)
 
     st.sidebar.divider()
-    st.sidebar.write(f"Document name: {st.session_state.filename or 'None'}")
-    st.sidebar.write(f"Document ID: `{st.session_state.document_id or 'None'}`")
-    st.sidebar.write(f"Status: **{st.session_state.processing_status}**")
-    st.sidebar.write(f"Embedding provider: `{display_settings.embedding_provider}`")
-    st.sidebar.write(f"Answer provider: `{display_settings.answer_provider}`")
-    st.sidebar.write(f"Answer model: `{display_settings.answer_model}`")
-    st.sidebar.write(f"Vector store: `{display_settings.vector_store}`")
-    if st.session_state.chunk_count is not None:
-        st.sidebar.write(f"Chunk count: {st.session_state.chunk_count}")
+    st.sidebar.write(f"Current project: **{st.session_state.project_name or 'None'}**")
+    stats = st.session_state.project_stats or {}
+    st.sidebar.write(f"Documents: {stats.get('document_count', 0)}")
+    st.sidebar.write(f"Indexed chunks: {stats.get('indexed_chunks', 0)}")
+    st.sidebar.write(f"Embedding model: `{stats.get('embedding_model', display_settings.embedding_provider)}`")
+    st.sidebar.write(f"Vector store: `{stats.get('vector_store', display_settings.vector_store)}`")
+    if stats.get("last_indexed_at"):
+        st.sidebar.write(f"Last indexed: {stats['last_indexed_at']}")
+
+    documents = st.session_state.project_documents or []
+    if documents:
+        st.sidebar.markdown("**Project documents**")
+        for document in documents:
+            cols = st.sidebar.columns([3, 1])
+            cols[0].write(document.get("filename", document.get("document_id")))
+            if cols[1].button("Del", key=f"del_{document['document_id']}"):
+                try:
+                    delete_project_document(
+                        settings.api_base_url,
+                        st.session_state.project_id,
+                        document["document_id"],
+                        timeout=settings.request_timeout_seconds,
+                    )
+                except (BackendUnavailableError, ApiClientError) as exc:
+                    st.sidebar.error(str(exc))
+                else:
+                    _refresh_project_state(settings, st.session_state.project_id)
 
 
-def _render_analysis_section(settings: UiSettings, document_id: str) -> None:
-    st.header("Step 2 — Analyze")
-    st.write("Run specialized presales analyses using the existing ask endpoint.")
+def _render_analysis_section(settings: UiSettings, project_id: str) -> None:
+    st.header("Step 2 — Analyze Project")
+    st.write("Run presales analyses across all indexed documents in the current project.")
 
     analysis_top_k = st.slider(
         "Analysis top_k",
@@ -120,7 +198,7 @@ def _render_analysis_section(settings: UiSettings, document_id: str) -> None:
                 label,
                 key=analysis_button_key(label),
                 use_container_width=True,
-                disabled=not document_id,
+                disabled=not project_id,
             ):
                 with st.spinner(f"Running {label}..."):
                     results, errors = run_analysis_for_label(
@@ -128,14 +206,12 @@ def _render_analysis_section(settings: UiSettings, document_id: str) -> None:
                         results=dict(st.session_state.analysis_results),
                         errors=dict(st.session_state.analysis_errors),
                         base_url=settings.api_base_url,
-                        document_id=document_id,
+                        project_id=project_id,
                         top_k=analysis_top_k,
                         timeout=settings.request_timeout_seconds,
                     )
                 st.session_state.analysis_results = results
                 st.session_state.analysis_errors = errors
-                if label in errors:
-                    st.error(f"{label} failed: {errors[label]}")
 
     for label in ANALYSIS_LABELS:
         if label in st.session_state.analysis_errors:
@@ -160,87 +236,59 @@ def main() -> None:
 
     st.set_page_config(page_title="AI RFP Analyzer", page_icon="📄", layout="wide")
     st.title("AI RFP Analyzer")
-    st.caption(
-        "Analyze requirements, risks, assumptions, clarification questions, "
-        "and delivery implications from RFP documents."
-    )
+    st.caption("Project workspace for multi-document RFP analysis, search, and Q&A.")
 
     _render_sidebar(settings)
 
-    st.header("Step 1 — Upload RFP")
-    uploaded_file = st.file_uploader("Upload an RFP PDF", type=["pdf"])
+    project_id = st.session_state.project_id
+    if not project_id:
+        st.info("Create or select a project in the sidebar to begin.")
+        return
 
-    if uploaded_file is not None:
-        st.write(f"Selected file: `{uploaded_file.name}`")
-        st.write(f"File size: {_format_bytes(uploaded_file.size)}")
+    st.header("Step 1 — Upload Document to Project")
+    uploaded_file = st.file_uploader("Upload a PDF", type=["pdf"])
 
-    if st.button("Process Document", type="primary", disabled=uploaded_file is None):
-        assert uploaded_file is not None
-        progress = st.progress(0.0, text="Starting...")
-        stage_labels: list[str] = []
-
-        def update_progress(stage: str) -> None:
-            stage_labels.append(stage)
-            st.session_state.processing_status = stage
-            progress.progress(min(len(stage_labels) / 6, 1.0), text=stage)
-
+    if uploaded_file is not None and st.button("Upload & Index", type="primary"):
         try:
-            result = process_document(
-                settings.api_base_url,
-                filename=uploaded_file.name,
-                content=uploaded_file.getvalue(),
-                timeout=settings.request_timeout_seconds,
-                progress_callback=update_progress,
-            )
-        except BackendUnavailableError as exc:
+            with st.spinner("Uploading and indexing..."):
+                upload_project_document(
+                    settings.api_base_url,
+                    project_id,
+                    filename=uploaded_file.name,
+                    content=uploaded_file.getvalue(),
+                    timeout=settings.request_timeout_seconds,
+                )
+        except (BackendUnavailableError, ApiClientError) as exc:
             st.error(str(exc))
-        except ApiClientError as exc:
-            if exc.status_code == 415:
-                st.error("Unsupported file type. Upload a PDF document.")
-            elif exc.status_code == 413:
-                st.error("Upload failed because the file is too large.")
-            elif exc.status_code == 422:
-                st.error(f"Document processing failed: {exc}")
-            else:
-                st.error(f"Document processing failed: {exc}")
         else:
-            st.session_state.document_id = result.document_id
-            st.session_state.filename = result.filename
-            st.session_state.file_size = result.size_bytes
-            st.session_state.chunk_count = result.chunk_count
-            st.session_state.processing_status = "Ready."
+            _refresh_project_state(settings, project_id)
+            st.success(f"Indexed `{uploaded_file.name}` in the current project.")
             st.session_state.analysis_results = {}
             st.session_state.analysis_errors = {}
             st.session_state.last_answer = None
-            progress.progress(1.0, text="Ready.")
-            st.success(
-                f"Document processed successfully. Indexed {result.chunks_indexed} chunks."
-            )
 
-    document_id = st.session_state.document_id
-    if not document_id:
-        st.info("Upload and process an RFP to unlock analysis and Q&A.")
+    stats = st.session_state.project_stats or {}
+    if stats.get("document_count", 0) == 0:
+        st.info("Upload at least one PDF to unlock analysis and Q&A.")
         return
 
-    _render_analysis_section(settings, document_id)
+    _render_analysis_section(settings, project_id)
 
-    st.header("Step 3 — Ask the RFP")
+    st.header("Step 3 — Ask the Project")
     question = st.text_area("Question", value=st.session_state.last_question, height=100)
     ask_top_k = st.slider("Ask top_k", min_value=1, max_value=20, value=5, key="ask_top_k")
 
     if st.button("Ask", type="primary", disabled=not question.strip()):
         try:
             with st.spinner("Generating answer..."):
-                response = ask_question(
+                response = ask_project(
                     settings.api_base_url,
-                    document_id,
+                    project_id,
                     question=question.strip(),
                     top_k=ask_top_k,
                     timeout=settings.request_timeout_seconds,
                 )
-        except BackendUnavailableError as exc:
-            st.error(str(exc))
-        except ApiClientError as exc:
+        except (BackendUnavailableError, ApiClientError) as exc:
             st.error(str(exc))
         else:
             st.session_state.last_question = question.strip()

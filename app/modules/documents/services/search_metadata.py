@@ -47,3 +47,39 @@ def enrich_search_results(
         enriched.append(result.model_copy(update={"metadata": metadata}))
 
     return enriched
+
+
+def enrich_project_search_results(
+    *,
+    project: object,
+    results: list[SearchResult],
+    embedding_model: str,
+) -> list[SearchResult]:
+    """Ensure project search results include project and document metadata."""
+    if not results:
+        return results
+
+    project_id = getattr(project, "project_id")
+    project_name = getattr(project, "project_name")
+    enriched: list[SearchResult] = []
+    for result in results:
+        metadata = result.metadata
+        if metadata is None:
+            enriched.append(result)
+            continue
+        if metadata.project_id and metadata.project_name:
+            enriched.append(result)
+            continue
+        enriched.append(
+            result.model_copy(
+                update={
+                    "metadata": metadata.model_copy(
+                        update={
+                            "project_id": metadata.project_id or project_id,
+                            "project_name": metadata.project_name or project_name,
+                        }
+                    )
+                }
+            )
+        )
+    return enriched

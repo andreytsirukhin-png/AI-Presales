@@ -1,6 +1,10 @@
+from datetime import UTC, datetime
+
 from app.infrastructure.vector_store.protocol import VectorStore
 from app.modules.documents.schemas.index import IndexResponse
 from app.modules.documents.services.embedding_service import EmbeddingService
+from app.modules.documents.services.metadata_service import MetadataService
+from app.modules.projects.services.project_service import ProjectService
 
 
 class IndexService:
@@ -10,26 +14,32 @@ class IndexService:
         self,
         embedding_service: EmbeddingService,
         vector_store: VectorStore,
+        metadata_service: MetadataService | None = None,
+        project_service: ProjectService | None = None,
     ) -> None:
         self._embedding_service = embedding_service
         self._vector_store = vector_store
+        self._metadata_service = metadata_service
+        self._project_service = project_service
 
     def index(self, document_id: str) -> IndexResponse:
-        """Generate embeddings and store them for a document.
-
-        Args:
-            document_id: Identifier returned by the upload endpoint.
-
-        Returns:
-            Summary of indexed chunks for the document.
-
-        Raises:
-            DocumentNotFoundError: If the document or its metadata does not exist.
-            InvalidPdfError: If the stored file is not a readable PDF.
-            EmptyPdfError: If the PDF contains no extractable text.
-        """
+        """Generate embeddings and store them for a document."""
         embeddings = self._embedding_service.generate_embeddings(document_id)
         self._vector_store.add_documents(document_id, embeddings)
+
+        indexed_at = datetime.now(UTC)
+        if self._metadata_service is not None:
+            document_metadata = self._metadata_service.get(document_id)
+            self._metadata_service.save(
+                document_metadata.model_copy(
+                    update={
+                        "chunks_indexed": len(embeddings),
+                        "indexed_at": indexed_at,
+                    }
+                )
+            )
+            if document_metadata.project_id and self._project_service is not None:
+                self._project_service.mark_indexed(document_metadata.project_id, indexed_at)
 
         return IndexResponse(
             document_id=document_id,

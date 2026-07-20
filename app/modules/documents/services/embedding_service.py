@@ -5,6 +5,7 @@ from app.infrastructure.embeddings.protocol import EmbeddingProvider
 from app.modules.documents.schemas.embedding import Embedding, EmbeddingResponse
 from app.modules.documents.services.chunk_service import ChunkService
 from app.modules.documents.services.citations import metadata_from_stored
+from app.infrastructure.storage.project_storage import ProjectStorage
 from app.modules.documents.services.metadata_service import MetadataService
 
 
@@ -27,11 +28,13 @@ class EmbeddingService:
         provider: EmbeddingProvider,
         *,
         embedding_model: str,
+        project_storage: ProjectStorage | None = None,
     ) -> None:
         self._metadata_service = metadata_service
         self._chunk_service = chunk_service
         self._provider = provider
         self._embedding_model = embedding_model
+        self._project_storage = project_storage
 
     def generate_embeddings(self, document_id: str) -> list[Embedding]:
         """Validate, chunk, and generate embeddings for a stored document.
@@ -51,6 +54,8 @@ class EmbeddingService:
         chunk_response = self._chunk_service.chunk(document_id)
         vectors = self._embed_chunk_texts([chunk.text for chunk in chunk_response.chunks])
         created_at = datetime.now(UTC).isoformat()
+        project_id = document_metadata.project_id
+        project_name = self._resolve_project_name(project_id)
 
         return [
             Embedding(
@@ -66,10 +71,20 @@ class EmbeddingService:
                     page_number=chunk.page_number,
                     section=chunk.section,
                     heading=chunk.heading,
+                    project_id=project_id,
+                    project_name=project_name,
                 ),
             )
             for chunk, vector in zip(chunk_response.chunks, vectors)
         ]
+
+    def _resolve_project_name(self, project_id: str | None) -> str | None:
+        if not project_id or self._project_storage is None:
+            return None
+        try:
+            return self._project_storage.get(project_id).project_name
+        except FileNotFoundError:
+            return None
 
     def _embed_chunk_texts(self, texts: list[str]) -> list[list[float]]:
         """Embed chunk texts using the configured provider."""

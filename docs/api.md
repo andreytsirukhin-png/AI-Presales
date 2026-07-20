@@ -345,6 +345,25 @@ curl -s -X POST http://localhost:8000/api/v1/documents/{document_id}/ask \
 
 ---
 
+## Project workspace (`/api/v1/projects`)
+
+| Method | Path | Purpose |
+| --- | --- | --- |
+| POST | `/api/v1/projects` | Create project |
+| GET | `/api/v1/projects` | List projects |
+| GET | `/api/v1/projects/{project_id}` | Get project |
+| DELETE | `/api/v1/projects/{project_id}` | Delete project and documents |
+| GET | `/api/v1/projects/{project_id}/statistics` | Document/chunk/provider stats |
+| POST | `/api/v1/projects/{project_id}/documents` | Upload PDF (auto-index) |
+| GET | `/api/v1/projects/{project_id}/documents` | List project documents |
+| DELETE | `/api/v1/projects/{project_id}/documents/{document_id}` | Remove one document |
+| POST | `/api/v1/projects/{project_id}/search` | Cross-document semantic search |
+| POST | `/api/v1/projects/{project_id}/ask` | Project-wide RAG Q&A |
+
+Upload-and-index accepts multipart `file` (PDF). Search uses the same `SearchRequest` body as document search. Ask uses `ProjectAskRequest` (`question`, `top_k`). Responses include cross-document `metadata` and `citations`.
+
+---
+
 ## POST /api/v1/analysis/demo
 
 **Purpose:** Return a static structured analysis payload for early API demos. This endpoint does **not** run the RAG pipeline and is not used by the Streamlit UI.

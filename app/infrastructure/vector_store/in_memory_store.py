@@ -93,3 +93,38 @@ class InMemoryVectorStore:
     def count(self) -> int:
         """Return the total number of indexed chunks in the store."""
         return sum(len(chunks) for chunks in self._store.values())
+
+    def count_documents(self, document_ids: list[str]) -> int:
+        """Return indexed chunk count across the given documents."""
+        return sum(len(self._store[document_id]) for document_id in document_ids if document_id in self._store)
+
+    def search_documents(
+        self,
+        document_ids: list[str],
+        query_vector: list[float],
+        top_k: int,
+    ) -> list[SearchResult]:
+        """Rank chunks across multiple documents by cosine similarity."""
+        if not document_ids:
+            return []
+
+        ranked_results: list[SearchResult] = []
+        for document_id in document_ids:
+            chunks = self._store.get(document_id)
+            if not chunks:
+                continue
+            for chunk in chunks:
+                ranked_results.append(
+                    SearchResult(
+                        chunk_index=chunk.index,
+                        text=chunk.text,
+                        score=cosine_similarity(query_vector, chunk.vector),
+                        metadata=chunk.metadata,
+                    )
+                )
+
+        if not ranked_results:
+            raise DocumentNotFoundError("No indexed documents found for project search.")
+
+        ranked_results.sort(key=lambda result: (-result.score, result.chunk_index))
+        return ranked_results[:top_k]

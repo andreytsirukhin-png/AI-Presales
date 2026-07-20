@@ -21,6 +21,10 @@ class DocumentNotFoundError(ParseError):
     """Raised when a requested document does not exist in storage."""
 
 
+class ProjectNotFoundError(ParseError):
+    """Raised when a requested project workspace does not exist."""
+
+
 class InvalidPdfError(ParseError):
     """Raised when PDF bytes cannot be parsed."""
 

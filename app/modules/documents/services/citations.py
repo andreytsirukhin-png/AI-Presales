@@ -54,6 +54,8 @@ def metadata_from_stored(
     page_number: int | None = None,
     section: str | None = None,
     heading: str | None = None,
+    project_id: str | None = None,
+    project_name: str | None = None,
 ) -> SourceMetadata:
     """Create source metadata for a chunk being indexed."""
     from app.modules.documents.schemas.source_metadata import build_chunk_id
@@ -68,4 +70,6 @@ def metadata_from_stored(
         created_at=created_at,
         section=section,
         heading=heading,
+        project_id=project_id,
+        project_name=project_name,
     )

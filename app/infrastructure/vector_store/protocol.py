@@ -53,3 +53,21 @@ class VectorStore(Protocol):
     def count(self) -> int:
         """Return the total number of indexed chunks in the store."""
         ...
+
+    def count_documents(self, document_ids: list[str]) -> int:
+        """Return indexed chunk count across the given documents."""
+        ...
+
+    def search_documents(
+        self,
+        document_ids: list[str],
+        query_vector: list[float],
+        top_k: int,
+    ) -> list[SearchResult]:
+        """Search indexed chunks across multiple documents.
+
+        Raises:
+            DocumentNotFoundError: If none of the documents are indexed.
+            ValueError: If vector dimensions do not match stored embeddings.
+        """
+        ...

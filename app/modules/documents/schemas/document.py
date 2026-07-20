@@ -27,6 +27,19 @@ class DocumentMetadata(BaseModel):
         description="Number of extracted characters after parsing.",
     )
     created_at: datetime = Field(..., description="UTC timestamp when the document was uploaded.")
+    project_id: str | None = Field(
+        default=None,
+        description="Owning project identifier when uploaded via a workspace.",
+    )
+    chunks_indexed: int | None = Field(
+        default=None,
+        ge=0,
+        description="Number of chunks indexed for this document.",
+    )
+    indexed_at: datetime | None = Field(
+        default=None,
+        description="UTC timestamp when the document was last indexed.",
+    )
 
 
 __all__ = ["DocumentMetadata", "DocumentStatus", "ParseResponse"]

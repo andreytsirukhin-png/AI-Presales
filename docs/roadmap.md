@@ -36,7 +36,7 @@ Implementation status for the AI Presales platform. Updated to reflect the curre
 - ⬜ Cross-document search in Chroma
 - ⬜ Ollama answer provider
 - ✅ Source citations and traceable RAG (US-016)
-- ⬜ Multi-document search
+- ✅ Project workspace and multi-document retrieval (US-017)
 - ⬜ Authentication and authorization
 - ⬜ PostgreSQL database
 - ⬜ pgvector integration

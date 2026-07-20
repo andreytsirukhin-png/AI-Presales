@@ -37,10 +37,16 @@ def _format_source_block(chunk: SearchResult) -> str:
         if metadata.heading
         else ""
     )
+    project_line = (
+        f"Project:\n{metadata.project_name}\n\n"
+        if metadata.project_name
+        else ""
+    )
 
     return (
         "Source\n"
         f"Document:\n{metadata.document_name}\n\n"
+        f"{project_line}"
         f"{page_line}"
         f"Chunk:\n{metadata.chunk_index}\n\n"
         f"{section_line}"

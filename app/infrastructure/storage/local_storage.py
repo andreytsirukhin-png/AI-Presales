@@ -46,3 +46,12 @@ class LocalFileStorage:
     def _metadata_path(self, document_id: str) -> Path:
         """Return the filesystem path for a document's metadata file."""
         return self._root_dir / f"{document_id}.meta.json"
+
+    def delete_document_files(self, document_id: str) -> None:
+        """Remove a document PDF and metadata file when present."""
+        pdf_path = self._root_dir / f"{document_id}.pdf"
+        if pdf_path.is_file():
+            pdf_path.unlink()
+        meta_path = self._metadata_path(document_id)
+        if meta_path.is_file():
+            meta_path.unlink()

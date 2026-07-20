@@ -16,6 +16,7 @@ from app.infrastructure.embeddings import (
 )
 from app.infrastructure.embeddings.protocol import EmbeddingProvider
 from app.infrastructure.storage import LocalFileStorage
+from app.infrastructure.storage.project_storage import ProjectStorage
 from app.infrastructure.storage.protocol import FileStorage
 from app.infrastructure.vector_store import ChromaVectorStore, InMemoryVectorStore
 from app.infrastructure.vector_store.protocol import VectorStore
@@ -31,7 +32,10 @@ from app.modules.documents.services.index_service import IndexService
 from app.modules.documents.services.metadata_service import MetadataService
 from app.modules.documents.services.parse_service import ParseService
 from app.modules.documents.services.search_service import SearchService
-from app.services.upload_service import UploadService
+from app.modules.projects.services.document_service import ProjectDocumentService
+from app.modules.projects.services.project_service import ProjectService
+from app.modules.projects.services.search_service import ProjectAskService, ProjectSearchService
+from app.services.upload_service import DEFAULT_MAX_UPLOAD_BYTES, UploadService
 
 
 @lru_cache
@@ -40,6 +44,12 @@ def build_file_storage(storage_backend: str, storage_path: str) -> FileStorage:
     if storage_backend != "local":
         raise ValueError(f"Unsupported storage backend: {storage_backend}")
     return LocalFileStorage(root_dir=storage_path)
+
+
+@lru_cache
+def build_project_storage(storage_path: str) -> ProjectStorage:
+    """Build a cached project metadata store for the given configuration."""
+    return ProjectStorage(root_dir=storage_path)
 
 
 @lru_cache
@@ -203,11 +213,19 @@ def get_upload_service(
     return UploadService(storage)
 
 
+def get_project_storage(
+    settings: Settings = Depends(get_settings),
+) -> ProjectStorage:
+    """Return the shared project metadata store."""
+    return build_project_storage(settings.storage_path)
+
+
 def get_embedding_service(
     metadata_service: MetadataService = Depends(get_metadata_service),
     chunk_service: ChunkService = Depends(get_chunk_service),
     provider: EmbeddingProvider = Depends(get_embedding_provider),
     settings: Settings = Depends(get_settings),
+    project_storage: ProjectStorage = Depends(get_project_storage),
 ) -> EmbeddingService:
     """Build the embedding service for the current request."""
     return EmbeddingService(
@@ -215,17 +233,29 @@ def get_embedding_service(
         chunk_service=chunk_service,
         provider=provider,
         embedding_model=resolve_embedding_model(settings),
+        project_storage=project_storage,
     )
+
+
+def get_project_service(
+    project_storage: ProjectStorage = Depends(get_project_storage),
+) -> ProjectService:
+    """Build the project service for the current request."""
+    return ProjectService(project_storage)
 
 
 def get_index_service(
     embedding_service: EmbeddingService = Depends(get_embedding_service),
     vector_store: VectorStore = Depends(get_vector_store),
+    metadata_service: MetadataService = Depends(get_metadata_service),
+    project_service: ProjectService = Depends(get_project_service),
 ) -> IndexService:
     """Build the index service for the current request."""
     return IndexService(
         embedding_service=embedding_service,
         vector_store=vector_store,
+        metadata_service=metadata_service,
+        project_service=project_service,
     )
 
 
@@ -257,6 +287,50 @@ def get_ask_service(
     )
 
 
+def get_project_document_service(
+    storage: FileStorage = Depends(get_file_storage),
+    project_service: ProjectService = Depends(get_project_service),
+    metadata_service: MetadataService = Depends(get_metadata_service),
+    index_service: IndexService = Depends(get_index_service),
+    vector_store: VectorStore = Depends(get_vector_store),
+) -> ProjectDocumentService:
+    """Build the project document service for the current request."""
+    return ProjectDocumentService(
+        storage=storage,
+        project_service=project_service,
+        metadata_service=metadata_service,
+        index_service=index_service,
+        vector_store=vector_store,
+        max_upload_bytes=DEFAULT_MAX_UPLOAD_BYTES,
+    )
+
+
+def get_project_search_service(
+    project_service: ProjectService = Depends(get_project_service),
+    provider: EmbeddingProvider = Depends(get_embedding_provider),
+    vector_store: VectorStore = Depends(get_vector_store),
+    settings: Settings = Depends(get_settings),
+) -> ProjectSearchService:
+    """Build the project search service for the current request."""
+    return ProjectSearchService(
+        project_service=project_service,
+        provider=provider,
+        vector_store=vector_store,
+        embedding_model=resolve_embedding_model(settings),
+    )
+
+
+def get_project_ask_service(
+    search_service: ProjectSearchService = Depends(get_project_search_service),
+    answer_provider: AnswerProvider = Depends(get_answer_provider),
+) -> ProjectAskService:
+    """Build the project ask service for the current request."""
+    return ProjectAskService(
+        search_service=search_service,
+        answer_provider=answer_provider,
+    )
+
+
 def clear_dependency_caches() -> None:
     """Clear cached settings and infrastructure instances for test isolation."""
     from app.core.config import clear_settings_cache
@@ -266,5 +340,6 @@ def clear_dependency_caches() -> None:
     build_embedding_provider.cache_clear()
     build_vector_store.cache_clear()
     build_answer_provider.cache_clear()
+    build_project_storage.cache_clear()
     get_pdf_parser.cache_clear()
     get_text_chunker.cache_clear()

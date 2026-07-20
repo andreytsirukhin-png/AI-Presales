@@ -4,19 +4,13 @@ from app.modules.documents.schemas.document import DocumentMetadata
 
 
 class MetadataService:
-    """Retrieves persisted document metadata from storage."""
+    """Retrieves and updates persisted document metadata from storage."""
 
     def __init__(self, storage: FileStorage) -> None:
         self._storage = storage
 
     def get(self, document_id: str) -> DocumentMetadata:
         """Return metadata for a stored document.
-
-        Args:
-            document_id: Identifier returned by the upload endpoint.
-
-        Returns:
-            Persisted document metadata.
 
         Raises:
             DocumentNotFoundError: If no metadata exists for the given identifier.
@@ -27,3 +21,7 @@ class MetadataService:
             raise DocumentNotFoundError(
                 f"Document not found: {document_id}"
             ) from exc
+
+    def save(self, metadata: DocumentMetadata) -> None:
+        """Persist document metadata."""
+        self._storage.save_metadata(metadata)

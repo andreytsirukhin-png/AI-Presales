@@ -1,0 +1,37 @@
+{
+  "errors": [],
+  "project_id": "db40d291-b3e0-4fc5-aca9-cee725fd3be5",
+  "uploads": {
+    "RFP.pdf": "e5942c72-5162-410b-834d-40164a17ed5b",
+    "Appendix-A.pdf": "40ebbff5-322f-4da9-8f47-acd53b90e397"
+  },
+  "statistics": {
+    "project_id": "db40d291-b3e0-4fc5-aca9-cee725fd3be5",
+    "project_name": "US017 Validation Workspace",
+    "document_count": 2,
+    "indexed_chunks": 2,
+    "embedding_provider": "ollama",
+    "embedding_model": "nomic-embed-text",
+    "vector_store": "inmemory",
+    "last_indexed_at": "2026-07-20T18:54:58.049974Z"
+  },
+  "search": {
+    "result_count": 2,
+    "document_names": [
+      "Appendix-A.pdf",
+      "RFP.pdf"
+    ]
+  },
+  "ask": {
+    "citation_count": 2,
+    "documents": [
+      "Appendix-A.pdf",
+      "RFP.pdf"
+    ]
+  },
+  "persistence": {
+    "required": false,
+    "skipped": true,
+    "reason": "inmemory"
+  }
+}

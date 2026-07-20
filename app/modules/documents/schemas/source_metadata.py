@@ -17,6 +17,8 @@ class SourceMetadata(BaseModel):
     created_at: str = Field(..., description="UTC timestamp when the chunk was indexed.")
     section: str | None = Field(default=None, description="Optional document section label.")
     heading: str | None = Field(default=None, description="Optional heading near the chunk.")
+    project_id: str | None = Field(default=None, description="Owning project identifier.")
+    project_name: str | None = Field(default=None, description="Owning project display name.")
 
 
 def build_chunk_id(document_id: str, chunk_index: int) -> str:

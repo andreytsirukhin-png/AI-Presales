@@ -162,6 +162,72 @@ class ChromaVectorStore:
 
         return sorted(results, key=lambda result: (-result.score, result.chunk_index))
 
+    def count_documents(self, document_ids: list[str]) -> int:
+        """Return indexed chunk count across the given documents."""
+        if not document_ids:
+            return 0
+        collection = self._collection_or_create()
+        total = 0
+        for document_id in document_ids:
+            payload = collection.get(where={"document_id": document_id})
+            total += len(payload.get("ids", []))
+        return total
+
+    def search_documents(
+        self,
+        document_ids: list[str],
+        query_vector: list[float],
+        top_k: int,
+    ) -> list[SearchResult]:
+        """Search indexed chunks across multiple documents using Chroma."""
+        if not document_ids:
+            return []
+
+        collection = self._collection_or_create()
+        indexed_ids = [
+            document_id
+            for document_id in document_ids
+            if self._document_exists(document_id)
+        ]
+        if not indexed_ids:
+            raise DocumentNotFoundError("No indexed documents found for project search.")
+
+        stored = collection.get(
+            where={"document_id": indexed_ids[0]},
+            include=["embeddings"],
+            limit=1,
+        )
+        cosine_similarity(query_vector, stored["embeddings"][0])
+
+        response = collection.query(
+            query_embeddings=[query_vector],
+            n_results=top_k,
+            where={"document_id": {"$in": indexed_ids}},
+            include=["documents", "distances", "metadatas"],
+        )
+
+        results: list[SearchResult] = []
+        ids = response.get("ids", [[]])[0]
+        documents = response.get("documents", [[]])[0]
+        distances = response.get("distances", [[]])[0]
+        metadatas = response.get("metadatas", [[]])[0]
+
+        for index, _chunk_id in enumerate(ids):
+            metadata = metadatas[index]
+            chunk_index = int(metadata["chunk_index"])
+            distance = float(distances[index])
+            score = 1.0 - distance
+            results.append(
+                SearchResult(
+                    chunk_index=chunk_index,
+                    text=documents[index] or "",
+                    score=score,
+                    metadata=ChromaVectorStore._metadata_from_record(metadata),
+                )
+            )
+
+        return sorted(results, key=lambda result: (-result.score, result.chunk_index))
+
     def delete_document(self, document_id: str) -> None:
         """Remove all indexed chunks for a document."""
         collection = self._collection_or_create()

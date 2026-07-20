@@ -208,6 +208,123 @@ def run_preset_analysis(
     )
 
 
+def create_project(
+    base_url: str,
+    *,
+    project_name: str,
+    description: str = "",
+    timeout: float = 30.0,
+) -> dict[str, Any]:
+    """Create a workspace project."""
+    with httpx.Client(base_url=base_url, timeout=timeout) as client:
+        return _request(
+            client,
+            "POST",
+            "/api/v1/projects",
+            json={"project_name": project_name, "description": description},
+        )
+
+
+def list_projects(base_url: str, *, timeout: float = 30.0) -> dict[str, Any]:
+    """List workspace projects."""
+    with httpx.Client(base_url=base_url, timeout=timeout) as client:
+        return _request(client, "GET", "/api/v1/projects")
+
+
+def get_project_statistics(
+    base_url: str,
+    project_id: str,
+    *,
+    timeout: float = 30.0,
+) -> dict[str, Any]:
+    """Return project indexing statistics."""
+    with httpx.Client(base_url=base_url, timeout=timeout) as client:
+        return _request(client, "GET", f"/api/v1/projects/{project_id}/statistics")
+
+
+def list_project_documents(
+    base_url: str,
+    project_id: str,
+    *,
+    timeout: float = 30.0,
+) -> dict[str, Any]:
+    """List documents in a project."""
+    with httpx.Client(base_url=base_url, timeout=timeout) as client:
+        return _request(client, "GET", f"/api/v1/projects/{project_id}/documents")
+
+
+def upload_project_document(
+    base_url: str,
+    project_id: str,
+    *,
+    filename: str,
+    content: bytes,
+    content_type: str = "application/pdf",
+    timeout: float = 180.0,
+) -> dict[str, Any]:
+    """Upload and auto-index a PDF in a project workspace."""
+    with httpx.Client(base_url=base_url, timeout=timeout) as client:
+        return _request(
+            client,
+            "POST",
+            f"/api/v1/projects/{project_id}/documents",
+            files={"file": (filename, content, content_type)},
+        )
+
+
+def delete_project_document(
+    base_url: str,
+    project_id: str,
+    document_id: str,
+    *,
+    timeout: float = 30.0,
+) -> None:
+    """Delete one document from a project."""
+    with httpx.Client(base_url=base_url, timeout=timeout) as client:
+        response = client.delete(f"/api/v1/projects/{project_id}/documents/{document_id}")
+        if response.status_code >= 400:
+            raise ApiClientError(
+                _extract_error_detail(response),
+                status_code=response.status_code,
+            )
+
+
+def ask_project(
+    base_url: str,
+    project_id: str,
+    *,
+    question: str,
+    top_k: int = 5,
+    timeout: float = 120.0,
+) -> dict[str, Any]:
+    """Ask a question across all indexed documents in a project."""
+    with httpx.Client(base_url=base_url, timeout=timeout) as client:
+        return _request(
+            client,
+            "POST",
+            f"/api/v1/projects/{project_id}/ask",
+            json={"question": question, "top_k": top_k},
+        )
+
+
+def run_preset_project_analysis(
+    base_url: str,
+    project_id: str,
+    *,
+    prompt: str,
+    top_k: int = 10,
+    timeout: float = 120.0,
+) -> dict[str, Any]:
+    """Run a preset analysis using project-wide retrieval."""
+    return ask_project(
+        base_url,
+        project_id,
+        question=prompt,
+        top_k=top_k,
+        timeout=timeout,
+    )
+
+
 def process_document(
     base_url: str,
     *,

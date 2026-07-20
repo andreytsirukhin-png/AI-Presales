@@ -6,12 +6,14 @@ from app.core.exceptions import FileTooLargeError, UnsupportedFileTypeError
 from app.models.analysis import AnalysisResult
 from app.models.document import UploadResponse
 from app.modules.documents.api.routes import router as documents_router
+from app.modules.projects.api.routes import router as projects_router
 from app.schemas.status import PlatformStatusResponse, build_platform_status
 from app.services.demo_analysis import build_demo_analysis
 from app.services.upload_service import UploadService
 
 router = APIRouter(prefix="/api/v1")
 router.include_router(documents_router)
+router.include_router(projects_router)
 
 
 @router.post("/documents/upload", response_model=UploadResponse, tags=["documents"])

@@ -84,7 +84,8 @@ def _refresh_project_state(settings: UiSettings, project_id: str) -> None:
     st.session_state.project_documents = documents_payload.get("documents", [])
 
 
-def _render_sidebar(settings: UiSettings) -> None:
+def _render_sidebar(settings: UiSettings) -> str:
+    """Render sidebar controls and return the selected navigation page."""
     st.sidebar.header("Project Workspace")
     st.sidebar.write(f"Backend URL: `{settings.api_base_url}`")
 
@@ -98,10 +99,10 @@ def _render_sidebar(settings: UiSettings) -> None:
         st.sidebar.success("Backend connected")
     except BackendUnavailableError:
         st.sidebar.error("Backend unavailable. Start FastAPI on port 8000.")
-        return
+        return str(st.session_state.get("ui_page", "Workspace"))
     except ApiClientError as exc:
         st.sidebar.error(str(exc))
-        return
+        return str(st.session_state.get("ui_page", "Workspace"))
 
     with st.sidebar.form("create_project_form"):
         new_name = st.text_input("New project name", value="RFP Workspace")
@@ -155,7 +156,6 @@ def _render_sidebar(settings: UiSettings) -> None:
 
     st.sidebar.divider()
     page = st.sidebar.radio("Navigation", ["Workspace", "Proposal", "Review"], key="ui_page")
-    st.session_state.ui_page = page
 
     st.sidebar.divider()
     st.sidebar.write(f"Current project: **{st.session_state.project_name or 'None'}**")
@@ -185,6 +185,8 @@ def _render_sidebar(settings: UiSettings) -> None:
                     st.sidebar.error(str(exc))
                 else:
                     _refresh_project_state(settings, st.session_state.project_id)
+
+    return page
 
 
 def _render_analysis_section(settings: UiSettings, project_id: str) -> None:
@@ -247,13 +249,13 @@ def main() -> None:
     st.title("AI RFP Analyzer")
     st.caption("Project workspace for multi-document RFP analysis, search, and Q&A.")
 
-    _render_sidebar(settings)
+    page = _render_sidebar(settings)
 
-    if st.session_state.get("ui_page") == "Proposal":
+    if page == "Proposal":
         render_proposal_page(settings)
         return
 
-    if st.session_state.get("ui_page") == "Review":
+    if page == "Review":
         render_review_page(settings)
         return
 

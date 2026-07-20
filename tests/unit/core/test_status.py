@@ -33,6 +33,14 @@ def test_build_platform_status_includes_answer_model_for_openrouter() -> None:
     assert status.answer_model == "anthropic/claude-3.5-sonnet"
 
 
+def test_build_platform_status_includes_vector_store() -> None:
+    settings = Settings(vector_store="chroma")
+
+    status = build_platform_status(settings)
+
+    assert status.vector_store == "chroma"
+
+
 def test_build_platform_status_includes_answer_model_for_openai() -> None:
     settings = Settings(
         answer_provider="openai",

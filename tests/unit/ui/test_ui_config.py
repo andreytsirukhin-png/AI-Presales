@@ -41,6 +41,7 @@ def test_apply_backend_status_overrides_provider_metadata() -> None:
         embedding_provider="mock",
         answer_provider="mock",
         answer_model="mock",
+        vector_store="inmemory",
     )
 
     updated = apply_backend_status(
@@ -49,10 +50,12 @@ def test_apply_backend_status_overrides_provider_metadata() -> None:
             "embedding_provider": "openai",
             "answer_provider": "openrouter",
             "answer_model": "openrouter/free",
+            "vector_store": "chroma",
         },
     )
 
     assert updated.embedding_provider == "openai"
     assert updated.answer_provider == "openrouter"
     assert updated.answer_model == "openrouter/free"
+    assert updated.vector_store == "chroma"
     assert updated.api_base_url == "http://localhost:8000"

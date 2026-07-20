@@ -25,7 +25,8 @@ def test_settings_default_values() -> None:
     assert settings.embedding_dimension == 16
     assert settings.openai_api_key == ""
     assert settings.openai_embedding_model == "text-embedding-3-small"
-    assert settings.vector_store_backend == "memory"
+    assert settings.vector_store == "inmemory"
+    assert settings.vector_db_path == "./vector_store"
     assert settings.answer_provider == "mock"
     assert settings.openai_chat_model == "gpt-4.1-mini"
     assert settings.openai_temperature == 0.0
@@ -74,7 +75,7 @@ def test_settings_parses_integer_environment_values(monkeypatch: pytest.MonkeyPa
     [
         "AI_PRESALES_STORAGE_BACKEND",
         "AI_PRESALES_EMBEDDING_PROVIDER",
-        "AI_PRESALES_VECTOR_STORE_BACKEND",
+        "AI_PRESALES_VECTOR_STORE",
         "AI_PRESALES_ANSWER_PROVIDER",
     ],
 )
@@ -124,6 +125,22 @@ def test_settings_parses_openrouter_answer_environment_values(
     assert settings.openrouter_api_key == "router-key"
     assert settings.openrouter_base_url == "https://example.openrouter/api/v1"
     assert settings.openrouter_chat_model == "anthropic/claude-3.5-sonnet"
+
+
+def test_settings_maps_legacy_vector_store_backend_memory() -> None:
+    settings = Settings.model_validate({"vector_store_backend": "memory"})
+
+    assert settings.vector_store == "inmemory"
+
+
+def test_settings_parses_chroma_vector_store(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("AI_PRESALES_VECTOR_STORE", "chroma")
+    monkeypatch.setenv("AI_PRESALES_VECTOR_DB_PATH", "./tmp/vectors")
+
+    settings = Settings()
+
+    assert settings.vector_store == "chroma"
+    assert settings.vector_db_path == "./tmp/vectors"
 
 
 def test_get_settings_is_cached() -> None:

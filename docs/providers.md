@@ -8,11 +8,49 @@ The platform isolates AI integrations behind small protocols. API routes and ser
 | --- | --- | --- |
 | Embeddings | `EmbeddingProvider` | `mock`, `openai`, `ollama` |
 | Answers | `AnswerProvider` | `mock`, `openai`, `openrouter` |
+| Vector store | `VectorStore` | `inmemory`, `chroma` |
 
 Protocols live in:
 
 - `app/infrastructure/embeddings/protocol.py`
 - `app/infrastructure/answers/protocol.py`
+- `app/infrastructure/vector_store/protocol.py`
+
+## In-memory vector store
+
+**Module:** `app/infrastructure/vector_store/in_memory_store.py`
+
+**Configuration:**
+
+```env
+AI_PRESALES_VECTOR_STORE=inmemory
+```
+
+**Behavior:**
+
+- Stores embeddings in process memory only.
+- Data is lost when the backend restarts.
+- Default backend for tests and local development.
+
+## ChromaDB vector store
+
+**Module:** `app/infrastructure/vector_store/chroma_store.py`
+
+**Configuration:**
+
+```env
+AI_PRESALES_VECTOR_STORE=chroma
+AI_PRESALES_VECTOR_DB_PATH=./vector_store
+```
+
+**Behavior:**
+
+- Persists embeddings under `AI_PRESALES_VECTOR_DB_PATH`.
+- Uses collection name `ai-presales` with cosine similarity.
+- Supports `create_collection`, `add_documents`, `search`, `delete_document`, `clear`, and `count`.
+- Indexed documents remain searchable after backend restart.
+
+Legacy env var `AI_PRESALES_VECTOR_STORE_BACKEND=memory` maps to `inmemory`.
 
 ## Mock answer provider
 
@@ -154,6 +192,7 @@ Factory functions:
 | Function | Selects |
 | --- | --- |
 | `build_embedding_provider()` | `MockEmbeddingProvider`, `OpenAIEmbeddingProvider`, or `OllamaEmbeddingProvider` |
+| `build_vector_store()` | `InMemoryVectorStore` or `ChromaVectorStore` |
 | `build_answer_provider()` | `MockAnswerProvider`, `OpenAIAnswerProvider`, or `OpenRouterAnswerProvider` |
 
 FastAPI injects providers into services through `Depends(get_embedding_provider)` and `Depends(get_answer_provider)`.
@@ -173,6 +212,8 @@ All variables below are backend settings in `app/core/config.py` (prefix `AI_PRE
 | `AI_PRESALES_OLLAMA_BASE_URL` | Ollama embeddings |
 | `AI_PRESALES_OLLAMA_EMBEDDING_MODEL` | Ollama embeddings |
 | `AI_PRESALES_OLLAMA_TIMEOUT_SECONDS` | Ollama embeddings |
+| `AI_PRESALES_VECTOR_STORE` | Vector store factory |
+| `AI_PRESALES_VECTOR_DB_PATH` | Chroma persistence path |
 | `AI_PRESALES_ANSWER_PROVIDER` | Answer factory |
 | `AI_PRESALES_OPENAI_CHAT_MODEL` | OpenAI answers; status API |
 | `AI_PRESALES_OPENAI_TEMPERATURE` | OpenAI and OpenRouter answers |
@@ -226,8 +267,11 @@ Follow the same pattern using `EmbeddingProvider` in `app/infrastructure/embeddi
 | Mock embedding | `tests/unit/infrastructure/test_mock_embedding_provider.py` |
 | OpenAI embedding | `tests/unit/infrastructure/test_openai_embedding_provider.py` |
 | Ollama embedding | `tests/unit/infrastructure/test_ollama_embedding_provider.py` |
+| In-memory vector store | `tests/unit/infrastructure/test_in_memory_vector_store.py` |
+| Chroma vector store | `tests/unit/infrastructure/test_chroma_vector_store.py` |
+| Vector store DI | `tests/unit/core/test_vector_store_dependencies.py` |
 | DI wiring | `tests/unit/core/test_answer_dependencies.py` |
-| API integration | `tests/integration/api/test_openai_answer_api.py`, `test_ask_api.py` |
+| Chroma persistence | `tests/integration/infrastructure/test_chroma_persistence.py` |
 
 Tests isolate environment variables through `tests/conftest.py` (see [testing.md](testing.md)).
 

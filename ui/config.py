@@ -23,17 +23,22 @@ class UiSettings:
     embedding_provider: str
     answer_provider: str
     answer_model: str
+    vector_store: str
 
 
 def get_ui_settings() -> UiSettings:
     """Load base UI settings from environment variables."""
     answer_provider = os.getenv("AI_PRESALES_ANSWER_PROVIDER", "mock")
+    vector_store = os.getenv("AI_PRESALES_VECTOR_STORE", "inmemory")
+    if vector_store == "memory":
+        vector_store = "inmemory"
     return UiSettings(
         api_base_url=os.getenv("AI_PRESALES_API_BASE_URL", "http://localhost:8000").rstrip("/"),
         request_timeout_seconds=float(os.getenv("AI_PRESALES_UI_REQUEST_TIMEOUT", "60")),
         embedding_provider=os.getenv("AI_PRESALES_EMBEDDING_PROVIDER", "mock"),
         answer_provider=answer_provider,
         answer_model=_resolve_answer_model_from_env(answer_provider),
+        vector_store=vector_store,
     )
 
 
@@ -45,4 +50,5 @@ def apply_backend_status(settings: UiSettings, status: Mapping[str, object]) -> 
         embedding_provider=str(status.get("embedding_provider", settings.embedding_provider)),
         answer_provider=str(status.get("answer_provider", settings.answer_provider)),
         answer_model=str(status.get("answer_model", settings.answer_model)),
+        vector_store=str(status.get("vector_store", settings.vector_store)),
     )

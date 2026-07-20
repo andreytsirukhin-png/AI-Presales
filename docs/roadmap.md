@@ -11,8 +11,10 @@ Implementation status for the AI Presales platform. Updated to reflect the curre
 - ✅ Mock embedding provider
 - ✅ OpenAI embedding provider
 - ✅ Ollama embedding provider
-- ✅ Vector search (in-memory cosine similarity)
-- ✅ Indexing (per-document vector store)
+- ✅ Vector store abstraction (`VectorStore` protocol)
+- ✅ In-memory vector store (`inmemory`)
+- ✅ ChromaDB persistent vector store (`chroma`)
+- ✅ Vector search (cosine similarity)
 - ✅ RAG ask endpoint (`POST /documents/{id}/ask`)
 - ✅ Mock answer provider
 - ✅ OpenAI answer provider
@@ -24,14 +26,14 @@ Implementation status for the AI Presales platform. Updated to reflect the curre
 - ✅ Custom Q&A in Streamlit
 - ✅ Source chunk display in UI
 - ✅ Demo run script (`scripts/run_demo.sh`)
-- ✅ Unit and integration tests (260 tests)
+- ✅ Unit and integration tests (278 tests)
 - ✅ Test isolation from developer `.env`
 - ✅ OpenAPI interactive docs
 - ✅ Legacy structured demo endpoint (`POST /api/v1/analysis/demo`)
 
 ## Planned
 
-- ⬜ Real embeddings persistence (survive restarts)
+- ⬜ Cross-document search in Chroma
 - ⬜ Ollama answer provider
 - ⬜ Inline citations with page numbers
 - ⬜ Multi-document search
@@ -51,7 +53,7 @@ Implementation status for the AI Presales platform. Updated to reflect the curre
 
 - **Analysis dashboard** uses preset prompts on the existing `/ask` endpoint rather than a separate analysis service. Structured output remains available only through the legacy `/analysis/demo` stub.
 - **Embeddings and answers** are independently configurable. OpenRouter is supported for answers only; use OpenAI or mock for embeddings today.
-- **Vector store** is in-memory. Restarting the backend clears indexed embeddings unless the document is reprocessed.
+- **Vector store** supports `inmemory` (default) or persistent `chroma` under `AI_PRESALES_VECTOR_DB_PATH`.
 
 ## Related documentation
 

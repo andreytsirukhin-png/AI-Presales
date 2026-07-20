@@ -17,7 +17,7 @@ from app.infrastructure.embeddings import (
 from app.infrastructure.embeddings.protocol import EmbeddingProvider
 from app.infrastructure.storage import LocalFileStorage
 from app.infrastructure.storage.protocol import FileStorage
-from app.infrastructure.vector_store import InMemoryVectorStore
+from app.infrastructure.vector_store import ChromaVectorStore, InMemoryVectorStore
 from app.infrastructure.vector_store.protocol import VectorStore
 from app.modules.documents.chunkers.text_chunker import TextChunker
 from app.modules.documents.parsers.pdf_parser import PDFParser
@@ -69,11 +69,15 @@ def build_embedding_provider(
 
 
 @lru_cache
-def build_vector_store(backend: str) -> VectorStore:
+def build_vector_store(store_name: str, vector_db_path: str) -> VectorStore:
     """Build a cached vector store for the given configuration."""
-    if backend != "memory":
-        raise ValueError(f"Unsupported vector store backend: {backend}")
-    return InMemoryVectorStore()
+    if store_name == "inmemory":
+        return InMemoryVectorStore()
+    if store_name == "chroma":
+        store = ChromaVectorStore(persist_path=vector_db_path)
+        store.create_collection()
+        return store
+    raise ValueError(f"Unsupported vector store: {store_name}")
 
 
 @lru_cache
@@ -146,7 +150,7 @@ def get_vector_store(
     settings: Settings = Depends(get_settings),
 ) -> VectorStore:
     """Return the shared vector store instance."""
-    return build_vector_store(settings.vector_store_backend)
+    return build_vector_store(settings.vector_store, settings.vector_db_path)
 
 
 def get_answer_provider(

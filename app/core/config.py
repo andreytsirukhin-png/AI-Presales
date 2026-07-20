@@ -1,12 +1,12 @@
 from functools import lru_cache
-from typing import Literal
+from typing import Any, Literal
 
-from pydantic import Field
+from pydantic import Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 StorageBackend = Literal["local"]
 EmbeddingProviderName = Literal["mock", "openai", "ollama"]
-VectorStoreBackend = Literal["memory"]
+VectorStoreName = Literal["inmemory", "chroma"]
 AnswerProviderName = Literal["mock", "openai", "openrouter"]
 
 
@@ -35,7 +35,9 @@ class Settings(BaseSettings):
     ollama_embedding_model: str = "nomic-embed-text"
     ollama_timeout_seconds: float = Field(default=30.0, ge=1)
 
-    vector_store_backend: VectorStoreBackend = "memory"
+    vector_store: VectorStoreName = "inmemory"
+    vector_db_path: str = "./vector_store"
+    vector_store_backend: str | None = Field(default=None, repr=False)
 
     answer_provider: AnswerProviderName = "mock"
     openai_chat_model: str = "gpt-4.1-mini"
@@ -47,6 +49,26 @@ class Settings(BaseSettings):
 
     search_default_top_k: int = Field(default=5, ge=1)
     search_max_top_k: int = Field(default=50, ge=1)
+
+    @field_validator("vector_store", mode="before")
+    @classmethod
+    def normalize_vector_store(cls, value: Any) -> Any:
+        """Map legacy ``memory`` backend name to ``inmemory``."""
+        if value == "memory":
+            return "inmemory"
+        return value
+
+    @model_validator(mode="before")
+    @classmethod
+    def migrate_legacy_vector_store_backend(cls, data: Any) -> Any:
+        """Support deprecated ``vector_store_backend`` settings field."""
+        if isinstance(data, dict) and data.get("vector_store") is None:
+            legacy_backend = data.get("vector_store_backend")
+            if legacy_backend is not None:
+                data["vector_store"] = (
+                    "inmemory" if legacy_backend == "memory" else legacy_backend
+                )
+        return data
 
 
 @lru_cache

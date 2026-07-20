@@ -70,6 +70,15 @@ Streamlit UI settings (`AI_PRESALES_API_BASE_URL`, `AI_PRESALES_UI_REQUEST_TIMEO
 
 After changing provider or storage settings, restart the server. Cached DI instances in `app/core/dependencies.py` also require a restart.
 
+### Switching vector stores
+
+| Mode | Env | Persistence |
+| --- | --- | --- |
+| In-memory (default) | `AI_PRESALES_VECTOR_STORE=inmemory` | Lost on restart |
+| ChromaDB | `AI_PRESALES_VECTOR_STORE=chroma` and `AI_PRESALES_VECTOR_DB_PATH=./vector_store` | Survives restart |
+
+When switching embedding provider or vector dimension, re-index documents. Chroma data for mismatched dimensions should be cleared (`delete_document` or remove `./vector_store`).
+
 Tests override this behavior — see [testing.md](testing.md).
 
 ## Add a new analysis type

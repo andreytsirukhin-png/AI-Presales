@@ -29,7 +29,7 @@ class IndexService:
             EmptyPdfError: If the PDF contains no extractable text.
         """
         embeddings = self._embedding_service.generate_embeddings(document_id)
-        self._vector_store.upsert(document_id, embeddings)
+        self._vector_store.add_documents(document_id, embeddings)
 
         return IndexResponse(
             document_id=document_id,

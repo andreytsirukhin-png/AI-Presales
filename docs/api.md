@@ -46,6 +46,7 @@ curl -s http://localhost:8000/health
 | `embedding_provider` | string | Active embedding provider (`mock`, `openai`, `ollama`) |
 | `answer_provider` | string | Active answer provider (`mock`, `openai`, `openrouter`) |
 | `answer_model` | string | Model id for the active answer provider |
+| `vector_store` | string | Active vector store (`inmemory`, `chroma`) |
 | `app_environment` | string | Value of `AI_PRESALES_APP_ENVIRONMENT` |
 
 **Example:**
@@ -60,6 +61,7 @@ curl -s http://localhost:8000/api/v1/status
   "embedding_provider": "mock",
   "answer_provider": "openrouter",
   "answer_model": "openrouter/free",
+  "vector_store": "inmemory",
   "app_environment": "development"
 }
 ```

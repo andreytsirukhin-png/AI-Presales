@@ -99,6 +99,7 @@ The sidebar shows:
 | Embedding provider | Backend status (or env fallback) |
 | Answer provider | Backend status (or env fallback) |
 | Answer model | Backend status (or env fallback) |
+| Vector store | Backend status (or env fallback) |
 | Chunk count | Session state (after processing) |
 
 ## Status endpoint

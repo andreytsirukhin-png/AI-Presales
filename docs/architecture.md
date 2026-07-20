@@ -31,7 +31,7 @@ flowchart TB
 
     subgraph Infrastructure
         Storage["LocalFileStorage"]
-        VectorStore["InMemoryVectorStore"]
+        VectorStore["Vector Store<br/>inmemory · chroma"]
         EmbProviders["Embedding Providers<br/>mock · openai · ollama"]
         AnsProviders["Answer Providers<br/>mock · openai · openrouter"]
     end
@@ -133,7 +133,7 @@ Infrastructure is built through cached factory functions in `app/core/dependenci
 | --- | --- |
 | `build_file_storage()` | `LocalFileStorage` |
 | `build_embedding_provider()` | `MockEmbeddingProvider`, `OpenAIEmbeddingProvider`, or `OllamaEmbeddingProvider` |
-| `build_vector_store()` | `InMemoryVectorStore` |
+| `build_vector_store()` | `InMemoryVectorStore` or `ChromaVectorStore` |
 | `build_answer_provider()` | `MockAnswerProvider`, `OpenAIAnswerProvider`, or `OpenRouterAnswerProvider` |
 
 FastAPI route handlers receive services via `Depends(get_*_service)`.
@@ -148,7 +148,7 @@ Embedding and answer providers are **independent**. A common demo setup uses moc
 
 ## Status API
 
-`GET /api/v1/status` exposes runtime provider metadata without side effects. The Streamlit sidebar calls this endpoint after a successful health check to display the backend's active embedding provider, answer provider, and answer model.
+`GET /api/v1/status` exposes runtime provider metadata without side effects. The Streamlit sidebar calls this endpoint after a successful health check to display the active embedding provider, answer provider, answer model, and vector store.
 
 See [api.md](api.md#get-apiv1status), [ui.md — Sidebar](ui.md#sidebar), and [ui.md — Status endpoint](ui.md#status-endpoint).
 

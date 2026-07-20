@@ -169,5 +169,25 @@ def test_search_raises_when_document_not_indexed(
         vector_store.search("missing-doc", [1.0, 0.0], top_k=1)
 
 
+def test_in_memory_store_supports_delete_clear_and_count(
+    vector_store: InMemoryVectorStore,
+) -> None:
+    vector_store.add_documents(
+        "doc-1",
+        [Embedding(index=0, text="chunk", vector=[1.0, 0.0])],
+    )
+    assert vector_store.count() == 1
+
+    vector_store.delete_document("doc-1")
+    assert vector_store.count() == 0
+
+    vector_store.add_documents(
+        "doc-2",
+        [Embedding(index=0, text="chunk", vector=[1.0, 0.0])],
+    )
+    vector_store.clear()
+    assert vector_store.count() == 0
+
+
 def test_cosine_similarity_returns_zero_for_zero_vector() -> None:
     assert cosine_similarity([0.0, 0.0], [1.0, 0.0]) == 0.0

@@ -85,6 +85,7 @@ def _render_sidebar(settings: UiSettings) -> None:
     st.sidebar.write(f"Embedding provider: `{display_settings.embedding_provider}`")
     st.sidebar.write(f"Answer provider: `{display_settings.answer_provider}`")
     st.sidebar.write(f"Answer model: `{display_settings.answer_model}`")
+    st.sidebar.write(f"Vector store: `{display_settings.vector_store}`")
     if st.session_state.chunk_count is not None:
         st.sidebar.write(f"Chunk count: {st.session_state.chunk_count}")
 

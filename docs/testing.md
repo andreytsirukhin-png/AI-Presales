@@ -1,6 +1,6 @@
 # Testing
 
-The project uses **pytest** with **260 tests** covering unit and integration layers.
+The project uses **pytest** with **278 tests** covering unit and integration layers.
 
 ## Quick start
 
@@ -104,7 +104,7 @@ The suite covers:
 - Full document pipeline (upload through index)
 - Semantic search and ask/RAG flows
 - All three answer providers (mock, OpenAI, OpenRouter)
-- Both embedding providers (mock, OpenAI, Ollama)
+- Vector store backends (in-memory and ChromaDB)
 - Platform status API
 - Streamlit HTTP client and analysis handlers
 - Upload validation (type, size, magic bytes)

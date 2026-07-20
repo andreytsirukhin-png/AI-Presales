@@ -19,6 +19,7 @@ class PlatformStatusResponse(BaseModel):
     embedding_provider: str = Field(..., description="Configured embedding provider.")
     answer_provider: str = Field(..., description="Configured answer provider.")
     answer_model: str = Field(..., description="Configured answer model for the active provider.")
+    vector_store: str = Field(..., description="Configured vector store backend.")
     app_environment: str = Field(..., description="Application environment name.")
 
 
@@ -29,5 +30,6 @@ def build_platform_status(settings: Settings) -> PlatformStatusResponse:
         embedding_provider=settings.embedding_provider,
         answer_provider=settings.answer_provider,
         answer_model=resolve_answer_model(settings),
+        vector_store=settings.vector_store,
         app_environment=settings.app_environment,
     )

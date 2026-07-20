@@ -103,6 +103,12 @@ def main() -> int:
 
     results["analyses"] = analyses
 
+    persistence = verify_vector_store_persistence(document_id, client)
+    results["persistence"] = persistence
+    print("PERSISTENCE", json.dumps(persistence, indent=2))
+    if persistence.get("required") and not persistence.get("persisted"):
+        results["errors"].append("Vector store persistence check failed")
+
     comparison = compare_mock_vs_ollama(pdf_bytes)
     results["mock_vs_ollama"] = comparison
     print("COMPARISON", json.dumps(comparison, indent=2))
@@ -113,6 +119,42 @@ def main() -> int:
     return 0 if not results["errors"] else 1
 
 
+def verify_vector_store_persistence(document_id: str, client: httpx.Client) -> dict[str, object]:
+    """Simulate a backend restart and verify indexed vectors remain searchable."""
+    from app.core.config import Settings, clear_settings_cache
+    from app.core.dependencies import build_vector_store, clear_dependency_caches
+    from app.infrastructure.embeddings.ollama_provider import OllamaEmbeddingProvider
+
+    status = client.get("/api/v1/status").json()
+    vector_store_name = status.get("vector_store", "inmemory")
+    if vector_store_name != "chroma":
+        return {
+            "required": False,
+            "skipped": True,
+            "reason": f"vector_store={vector_store_name}",
+        }
+
+    clear_dependency_caches()
+    clear_settings_cache()
+    settings = Settings()
+    store = build_vector_store(settings.vector_store, settings.vector_db_path)
+    provider = OllamaEmbeddingProvider(
+        base_url=settings.ollama_base_url,
+        model=settings.ollama_embedding_model,
+        dimension=settings.embedding_dimension,
+        timeout_seconds=settings.ollama_timeout_seconds,
+    )
+    query_vector = provider.embed("CRM integration requirements")
+    hits = store.search(document_id, query_vector, top_k=3)
+
+    return {
+        "required": True,
+        "persisted": len(hits) > 0,
+        "result_count": len(hits),
+        "top_score": hits[0].score if hits else None,
+    }
+
+
 def compare_mock_vs_ollama(pdf_bytes: bytes) -> dict[str, object]:
     """Compare retrieval quality between mock and Ollama embeddings."""
     from app.infrastructure.embeddings.mock_provider import MockEmbeddingProvider
@@ -120,7 +162,7 @@ def compare_mock_vs_ollama(pdf_bytes: bytes) -> dict[str, object]:
     from app.infrastructure.vector_store.in_memory_store import InMemoryVectorStore
     from app.modules.documents.chunkers.text_chunker import TextChunker
     from app.modules.documents.parsers.pdf_parser import PDFParser
-    from app.modules.documents.schemas.index import IndexedChunk
+    from app.modules.documents.schemas.embedding import Embedding
 
     parser = PDFParser()
     chunker = TextChunker()
@@ -135,17 +177,17 @@ def compare_mock_vs_ollama(pdf_bytes: bytes) -> dict[str, object]:
 
     mock_store = InMemoryVectorStore()
     ollama_store = InMemoryVectorStore()
-    mock_store.upsert(
+    mock_store.add_documents(
         "mock-doc",
         [
-            IndexedChunk(index=chunk.index, text=chunk.text, vector=vector)
+            Embedding(index=chunk.index, text=chunk.text, vector=vector)
             for chunk, vector in zip(chunks, mock_vectors)
         ],
     )
-    ollama_store.upsert(
+    ollama_store.add_documents(
         "ollama-doc",
         [
-            IndexedChunk(index=chunk.index, text=chunk.text, vector=vector)
+            Embedding(index=chunk.index, text=chunk.text, vector=vector)
             for chunk, vector in zip(chunks, ollama_vectors)
         ],
     )

@@ -28,6 +28,7 @@ def test_platform_status_endpoint_returns_provider_metadata() -> None:
             "embedding_provider",
             "answer_provider",
             "answer_model",
+            "vector_store",
             "app_environment",
         }
     finally:

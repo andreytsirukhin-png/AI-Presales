@@ -43,7 +43,7 @@ See [docs/architecture.md](docs/architecture.md) for layered design, dependency 
 - Pluggable answer providers: **mock**, **OpenAI**, **OpenRouter**
 - Platform status API for runtime provider metadata
 - Interactive OpenAPI docs at `/docs`
-- 260 automated tests with isolated configuration
+- 278 automated tests with isolated configuration
 
 ## Technology stack
 
@@ -54,7 +54,7 @@ See [docs/architecture.md](docs/architecture.md) for layered design, dependency 
 | AI | OpenAI SDK (OpenAI + OpenRouter-compatible) |
 | PDF | pypdf |
 | Storage | Local filesystem |
-| Vector store | In-memory (cosine similarity) |
+| Vector store | `inmemory`, `chroma` (persistent) |
 | Tests | pytest, httpx |
 
 **Python:** 3.12
@@ -116,7 +116,8 @@ Settings use the `AI_PRESALES_` prefix. Backend variables are defined in `app/co
 | `AI_PRESALES_OLLAMA_BASE_URL` | `http://localhost:11434` | Ollama server base URL |
 | `AI_PRESALES_OLLAMA_EMBEDDING_MODEL` | `nomic-embed-text` | Ollama embedding model |
 | `AI_PRESALES_OLLAMA_TIMEOUT_SECONDS` | `30` | HTTP timeout for Ollama embed requests |
-| `AI_PRESALES_VECTOR_STORE_BACKEND` | `memory` | Vector store backend |
+| `AI_PRESALES_VECTOR_STORE` | `inmemory` | `inmemory` or `chroma` |
+| `AI_PRESALES_VECTOR_DB_PATH` | `./vector_store` | ChromaDB persistence directory |
 | `AI_PRESALES_ANSWER_PROVIDER` | `mock` | `mock`, `openai`, or `openrouter` |
 | `AI_PRESALES_OPENAI_CHAT_MODEL` | `gpt-4.1-mini` | OpenAI chat model |
 | `AI_PRESALES_OPENAI_TEMPERATURE` | `0.0` | Sampling temperature (OpenAI and OpenRouter) |
@@ -171,6 +172,13 @@ AI_PRESALES_EMBEDDING_DIMENSION=768
 AI_PRESALES_OLLAMA_BASE_URL=http://localhost:11434
 AI_PRESALES_OLLAMA_EMBEDDING_MODEL=nomic-embed-text
 AI_PRESALES_OLLAMA_TIMEOUT_SECONDS=30
+```
+
+**Persistent ChromaDB vector store:**
+
+```env
+AI_PRESALES_VECTOR_STORE=chroma
+AI_PRESALES_VECTOR_DB_PATH=./vector_store
 ```
 
 Provider details: [docs/providers.md](docs/providers.md)
@@ -242,7 +250,8 @@ Embedding and answer providers are configured independently.
 ## Current limitations
 
 - PDF uploads only (25 MB max)
-- In-memory vector store (data lost on restart)
+- In-memory vector store when `AI_PRESALES_VECTOR_STORE=inmemory` (data lost on restart)
+- ChromaDB required when `AI_PRESALES_VECTOR_STORE=chroma`
 - Single-document search scope (no cross-document retrieval)
 - No authentication or authorization
 - No response streaming

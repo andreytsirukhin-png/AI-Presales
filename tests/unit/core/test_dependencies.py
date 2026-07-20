@@ -37,8 +37,8 @@ def _current_settings() -> Settings:
 
 def test_shared_vector_store_instance_is_reused() -> None:
     settings = _current_settings()
-    first = build_vector_store(settings.vector_store_backend)
-    second = build_vector_store(settings.vector_store_backend)
+    first = build_vector_store(settings.vector_store, settings.vector_db_path)
+    second = build_vector_store(settings.vector_store, settings.vector_db_path)
 
     assert first is second
 
@@ -70,10 +70,10 @@ def test_embedding_dimension_comes_from_settings() -> None:
     assert provider.dimension == settings.embedding_dimension
 
 
-def test_default_vector_store_is_memory() -> None:
+def test_default_vector_store_is_inmemory() -> None:
     settings = _current_settings()
 
-    assert settings.vector_store_backend == "memory"
+    assert settings.vector_store == "inmemory"
 
 
 def test_default_answer_provider_is_mock() -> None:
@@ -101,9 +101,9 @@ def test_different_storage_path_creates_different_cached_instance() -> None:
 
 def test_cache_reset_provides_isolation() -> None:
     settings = _current_settings()
-    first = build_vector_store(settings.vector_store_backend)
+    first = build_vector_store(settings.vector_store, settings.vector_db_path)
     clear_dependency_caches()
-    second = build_vector_store(get_settings().vector_store_backend)
+    second = build_vector_store(get_settings().vector_store, get_settings().vector_db_path)
 
     assert first is not second
 
@@ -111,7 +111,7 @@ def test_cache_reset_provides_isolation() -> None:
 def test_service_dependencies_are_resolvable() -> None:
     settings = _current_settings()
     storage = build_file_storage(settings.storage_backend, settings.storage_path)
-    vector_store = build_vector_store(settings.vector_store_backend)
+    vector_store = build_vector_store(settings.vector_store, settings.vector_db_path)
     embedding_provider = build_embedding_provider(
         settings.embedding_provider,
         settings.embedding_dimension,
@@ -333,7 +333,7 @@ def test_shared_metadata_state_survives_across_requests() -> None:
             settings.openai_api_key,
             settings.openai_embedding_model,
         ),
-        lambda settings: build_vector_store(settings.vector_store_backend),
+        lambda settings: build_vector_store(settings.vector_store, settings.vector_db_path),
         lambda settings: build_answer_provider(
             settings.answer_provider,
             settings.openai_api_key,

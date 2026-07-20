@@ -11,6 +11,15 @@ class InMemoryVectorStore:
     def __init__(self) -> None:
         self._store: dict[str, list[IndexedChunk]] = {}
 
+    def create_collection(self) -> None:
+        """Ensure the in-memory store is initialized."""
+        if self._store is None:
+            self._store = {}
+
+    def add_documents(self, document_id: str, embeddings: list[Embedding]) -> None:
+        """Insert or replace embeddings for a document."""
+        self.upsert(document_id, embeddings)
+
     def upsert(self, document_id: str, embeddings: list[Embedding]) -> None:
         """Insert or replace embeddings for a document."""
         self._store[document_id] = [
@@ -70,3 +79,15 @@ class InMemoryVectorStore:
         )
 
         return ranked_results[:top_k]
+
+    def delete_document(self, document_id: str) -> None:
+        """Remove all indexed chunks for a document."""
+        self._store.pop(document_id, None)
+
+    def clear(self) -> None:
+        """Remove all indexed chunks from the store."""
+        self._store.clear()
+
+    def count(self) -> int:
+        """Return the total number of indexed chunks in the store."""
+        return sum(len(chunks) for chunks in self._store.values())

@@ -1,8 +1,10 @@
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
+from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
+from fastapi.responses import Response
 
 from app.core.dependencies import (
     get_project_ask_service,
     get_project_document_service,
+    get_project_proposal_service,
     get_project_search_service,
     get_project_service,
 )
@@ -14,6 +16,7 @@ from app.core.exceptions import (
     FileTooLargeError,
     InvalidPdfError,
     ProjectNotFoundError,
+    ProposalNotFoundError,
     UnsupportedFileTypeError,
 )
 from app.core.config import Settings, get_settings
@@ -29,6 +32,17 @@ from app.modules.projects.schemas.project import (
     ProjectStatisticsResponse,
 )
 from app.modules.projects.schemas.search import ProjectAskRequest, ProjectAskResponse, ProjectSearchResponse
+from app.modules.projects.schemas.proposal import (
+    ProposalGenerateRequest,
+    ProposalRegenerateRequest,
+    ProposalResponse,
+)
+from app.modules.projects.services.proposal_export import (
+    proposal_pdf_placeholder,
+    proposal_to_docx_bytes,
+    proposal_to_markdown,
+)
+from app.modules.projects.services.proposal_service import ProposalService
 from app.modules.projects.services.document_service import ProjectDocumentService
 from app.modules.projects.services.project_service import ProjectService
 from app.modules.projects.services.search_service import ProjectAskService, ProjectSearchService
@@ -202,3 +216,124 @@ async def ask_project(
         raise HTTPException(status_code=422, detail=str(exc)) from exc
     except AnswerError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+
+@router.post("/{project_id}/proposal", response_model=ProposalResponse)
+async def generate_project_proposal(
+    project_id: str,
+    request: ProposalGenerateRequest,
+    proposal_service: ProposalService = Depends(get_project_proposal_service),
+) -> ProposalResponse:
+    """Generate all or selected proposal sections with retrieval-backed citations."""
+    try:
+        proposal = proposal_service.generate(
+            project_id,
+            top_k=request.top_k,
+            section_keys=request.section_keys,
+        )
+        return ProposalResponse(proposal=proposal)
+    except ProjectNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except DocumentNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    except EmbeddingError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    except AnswerError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+
+@router.post("/{project_id}/proposal/regenerate", response_model=ProposalResponse)
+async def regenerate_project_proposal_sections(
+    project_id: str,
+    request: ProposalRegenerateRequest,
+    proposal_service: ProposalService = Depends(get_project_proposal_service),
+) -> ProposalResponse:
+    """Regenerate selected cached proposal sections."""
+    try:
+        proposal = proposal_service.regenerate_sections(
+            project_id,
+            section_keys=request.section_keys,
+            top_k=request.top_k,
+        )
+        return ProposalResponse(proposal=proposal)
+    except ProjectNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except ProposalNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except DocumentNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    except EmbeddingError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    except AnswerError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+
+@router.get("/{project_id}/proposal", response_model=ProposalResponse)
+async def get_project_proposal(
+    project_id: str,
+    proposal_service: ProposalService = Depends(get_project_proposal_service),
+) -> ProposalResponse:
+    """Return the cached proposal for a project."""
+    try:
+        return ProposalResponse(proposal=proposal_service.get(project_id))
+    except ProjectNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except ProposalNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+
+@router.delete("/{project_id}/proposal", status_code=204)
+async def delete_project_proposal(
+    project_id: str,
+    proposal_service: ProposalService = Depends(get_project_proposal_service),
+) -> None:
+    """Delete the cached proposal for a project."""
+    try:
+        proposal_service.delete(project_id)
+    except ProjectNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except ProposalNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+
+@router.get("/{project_id}/proposal/export")
+async def export_project_proposal(
+    project_id: str,
+    format: str = Query(default="markdown", pattern="^(markdown|docx|pdf)$"),
+    proposal_service: ProposalService = Depends(get_project_proposal_service),
+) -> Response:
+    """Export a cached proposal as Markdown, DOCX, or PDF (placeholder)."""
+    try:
+        proposal = proposal_service.get(project_id)
+    except ProjectNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except ProposalNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+    if format == "markdown":
+        body = proposal_to_markdown(proposal)
+        return Response(
+            content=body,
+            media_type="text/markdown; charset=utf-8",
+            headers={"Content-Disposition": f'attachment; filename="{project_id}-proposal.md"'},
+        )
+    if format == "docx":
+        body = proposal_to_docx_bytes(proposal)
+        return Response(
+            content=body,
+            media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            headers={"Content-Disposition": f'attachment; filename="{project_id}-proposal.docx"'},
+        )
+    body = proposal_pdf_placeholder(proposal)
+    return Response(
+        content=body,
+        media_type="text/plain; charset=utf-8",
+        headers={
+            "Content-Disposition": f'attachment; filename="{project_id}-proposal.pdf.txt"',
+            "X-Export-Placeholder": "pdf-not-implemented",
+        },
+    )

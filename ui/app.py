@@ -22,6 +22,7 @@ from ui.api_client import (
     upload_project_document,
 )
 from ui.config import UiSettings, apply_backend_status, get_ui_settings
+from ui.proposal_view import render_proposal_page
 from ui.prompts import ANALYSIS_LABELS
 
 
@@ -35,6 +36,8 @@ def _init_session_state() -> None:
         "analysis_errors": {},
         "last_question": "",
         "last_answer": None,
+        "proposal": None,
+        "ui_page": "Workspace",
     }
     for key, value in defaults.items():
         if key not in st.session_state:
@@ -149,6 +152,10 @@ def _render_sidebar(settings: UiSettings) -> None:
             _refresh_project_state(settings, st.session_state.project_id)
 
     st.sidebar.divider()
+    page = st.sidebar.radio("Navigation", ["Workspace", "Proposal"], key="ui_page")
+    st.session_state.ui_page = page
+
+    st.sidebar.divider()
     st.sidebar.write(f"Current project: **{st.session_state.project_name or 'None'}**")
     stats = st.session_state.project_stats or {}
     st.sidebar.write(f"Documents: {stats.get('document_count', 0)}")
@@ -239,6 +246,10 @@ def main() -> None:
     st.caption("Project workspace for multi-document RFP analysis, search, and Q&A.")
 
     _render_sidebar(settings)
+
+    if st.session_state.get("ui_page") == "Proposal":
+        render_proposal_page(settings)
+        return
 
     project_id = st.session_state.project_id
     if not project_id:

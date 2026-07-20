@@ -25,6 +25,10 @@ class ProjectNotFoundError(ParseError):
     """Raised when a requested project workspace does not exist."""
 
 
+class ProposalNotFoundError(ParseError):
+    """Raised when a requested project proposal does not exist."""
+
+
 class InvalidPdfError(ParseError):
     """Raised when PDF bytes cannot be parsed."""
 

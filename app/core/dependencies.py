@@ -16,6 +16,7 @@ from app.infrastructure.embeddings import (
 )
 from app.infrastructure.embeddings.protocol import EmbeddingProvider
 from app.infrastructure.storage import LocalFileStorage
+from app.infrastructure.proposals.proposal_storage import ProposalStorage
 from app.infrastructure.storage.project_storage import ProjectStorage
 from app.infrastructure.storage.protocol import FileStorage
 from app.infrastructure.vector_store import ChromaVectorStore, InMemoryVectorStore
@@ -34,6 +35,7 @@ from app.modules.documents.services.parse_service import ParseService
 from app.modules.documents.services.search_service import SearchService
 from app.modules.projects.services.document_service import ProjectDocumentService
 from app.modules.projects.services.project_service import ProjectService
+from app.modules.projects.services.proposal_service import ProposalService
 from app.modules.projects.services.search_service import ProjectAskService, ProjectSearchService
 from app.services.upload_service import DEFAULT_MAX_UPLOAD_BYTES, UploadService
 
@@ -50,6 +52,12 @@ def build_file_storage(storage_backend: str, storage_path: str) -> FileStorage:
 def build_project_storage(storage_path: str) -> ProjectStorage:
     """Build a cached project metadata store for the given configuration."""
     return ProjectStorage(root_dir=storage_path)
+
+
+@lru_cache
+def build_proposal_storage(storage_path: str) -> ProposalStorage:
+    """Build a cached proposal store for the given configuration."""
+    return ProposalStorage(root_dir=storage_path)
 
 
 @lru_cache
@@ -331,6 +339,28 @@ def get_project_ask_service(
     )
 
 
+def get_proposal_storage(
+    settings: Settings = Depends(get_settings),
+) -> ProposalStorage:
+    """Return the shared proposal cache store."""
+    return build_proposal_storage(settings.storage_path)
+
+
+def get_project_proposal_service(
+    project_service: ProjectService = Depends(get_project_service),
+    search_service: ProjectSearchService = Depends(get_project_search_service),
+    answer_provider: AnswerProvider = Depends(get_answer_provider),
+    proposal_storage: ProposalStorage = Depends(get_proposal_storage),
+) -> ProposalService:
+    """Build the proposal generation service for the current request."""
+    return ProposalService(
+        project_service=project_service,
+        search_service=search_service,
+        answer_provider=answer_provider,
+        storage=proposal_storage,
+    )
+
+
 def clear_dependency_caches() -> None:
     """Clear cached settings and infrastructure instances for test isolation."""
     from app.core.config import clear_settings_cache
@@ -341,5 +371,6 @@ def clear_dependency_caches() -> None:
     build_vector_store.cache_clear()
     build_answer_provider.cache_clear()
     build_project_storage.cache_clear()
+    build_proposal_storage.cache_clear()
     get_pdf_parser.cache_clear()
     get_text_chunker.cache_clear()

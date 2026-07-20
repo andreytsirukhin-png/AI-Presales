@@ -37,6 +37,7 @@ Implementation status for the AI Presales platform. Updated to reflect the curre
 - ⬜ Ollama answer provider
 - ✅ Source citations and traceable RAG (US-016)
 - ✅ Project workspace and multi-document retrieval (US-017)
+- ✅ AI proposal generator with section caching and export (US-018)
 - ⬜ Authentication and authorization
 - ⬜ PostgreSQL database
 - ⬜ pgvector integration

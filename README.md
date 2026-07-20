@@ -37,6 +37,7 @@ See [docs/architecture.md](docs/architecture.md) for layered design, dependency 
 - PDF upload with validation (type and size)
 - Parse, chunk, embed, and index pipeline
 - Project workspaces with multi-document upload, auto-index, search, and Q&A (`/api/v1/projects`)
+- AI proposal generator with per-section RAG, caching, and Markdown/DOCX export
 - Semantic search with per-chunk source metadata and citations on `/ask`
 - RAG question answering with retrieved source chunks
 - Presales analysis dashboard (seven preset analyses via `/ask`)

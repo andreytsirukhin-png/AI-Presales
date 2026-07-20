@@ -359,6 +359,11 @@ curl -s -X POST http://localhost:8000/api/v1/documents/{document_id}/ask \
 | DELETE | `/api/v1/projects/{project_id}/documents/{document_id}` | Remove one document |
 | POST | `/api/v1/projects/{project_id}/search` | Cross-document semantic search |
 | POST | `/api/v1/projects/{project_id}/ask` | Project-wide RAG Q&A |
+| POST | `/api/v1/projects/{project_id}/proposal` | Generate proposal (all or selected sections) |
+| POST | `/api/v1/projects/{project_id}/proposal/regenerate` | Regenerate selected sections |
+| GET | `/api/v1/projects/{project_id}/proposal` | Get cached proposal |
+| DELETE | `/api/v1/projects/{project_id}/proposal` | Delete cached proposal |
+| GET | `/api/v1/projects/{project_id}/proposal/export?format=markdown\|docx\|pdf` | Export proposal |
 
 Upload-and-index accepts multipart `file` (PDF). Search uses the same `SearchRequest` body as document search. Ask uses `ProjectAskRequest` (`question`, `top_k`). Responses include cross-document `metadata` and `citations`.
 

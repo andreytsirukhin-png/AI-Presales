@@ -152,6 +152,16 @@ Project → Documents → Chunks → Embeddings → Vector store
 
 The Streamlit UI uses project-scoped `/ask` for analyses and Q&A.
 
+## AI proposal generator (US-018)
+
+`ProposalService` generates fifteen delivery-manager sections independently:
+
+1. Semantic search per section (`ProjectSearchService` + section-specific query).
+2. One LLM call per section (`AnswerProvider.generate_answer`).
+3. Citations derived from retrieved chunks (`build_citations`).
+
+Proposals are cached at `uploads/projects/{project_id}.proposal.json`. Regeneration updates only requested section keys. Export supports Markdown and DOCX; PDF returns a placeholder payload until a PDF renderer is added.
+
 ## Dependency injection
 
 Infrastructure is built through cached factory functions in `app/core/dependencies.py`:

@@ -396,6 +396,77 @@ def export_project_proposal(
         return response.content
 
 
+def generate_project_review(
+    base_url: str,
+    project_id: str,
+    *,
+    top_k: int = 8,
+    category_keys: list[str] | None = None,
+    timeout: float = 600.0,
+) -> dict[str, Any]:
+    """Generate a cached proposal review report."""
+    payload: dict[str, Any] = {"top_k": top_k}
+    if category_keys is not None:
+        payload["category_keys"] = category_keys
+    with httpx.Client(base_url=base_url, timeout=timeout) as client:
+        return _request(
+            client,
+            "POST",
+            f"/api/v1/projects/{project_id}/review",
+            json=payload,
+        )
+
+
+def get_project_review(
+    base_url: str,
+    project_id: str,
+    *,
+    timeout: float = 30.0,
+) -> dict[str, Any]:
+    """Return a cached project review report."""
+    with httpx.Client(base_url=base_url, timeout=timeout) as client:
+        return _request(client, "GET", f"/api/v1/projects/{project_id}/review")
+
+
+def regenerate_project_review_categories(
+    base_url: str,
+    project_id: str,
+    *,
+    category_keys: list[str],
+    top_k: int = 8,
+    timeout: float = 180.0,
+) -> dict[str, Any]:
+    """Regenerate selected review categories."""
+    with httpx.Client(base_url=base_url, timeout=timeout) as client:
+        return _request(
+            client,
+            "POST",
+            f"/api/v1/projects/{project_id}/review/regenerate",
+            json={"category_keys": category_keys, "top_k": top_k},
+        )
+
+
+def export_project_review(
+    base_url: str,
+    project_id: str,
+    *,
+    export_format: str = "markdown",
+    timeout: float = 60.0,
+) -> bytes:
+    """Download a review export payload."""
+    with httpx.Client(base_url=base_url, timeout=timeout) as client:
+        response = client.get(
+            f"/api/v1/projects/{project_id}/review/export",
+            params={"format": export_format},
+        )
+        if response.status_code >= 400:
+            raise ApiClientError(
+                _extract_error_detail(response),
+                status_code=response.status_code,
+            )
+        return response.content
+
+
 def process_document(
     base_url: str,
     *,

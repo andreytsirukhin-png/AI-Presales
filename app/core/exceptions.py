@@ -29,6 +29,10 @@ class ProposalNotFoundError(ParseError):
     """Raised when a requested project proposal does not exist."""
 
 
+class ReviewNotFoundError(ParseError):
+    """Raised when a requested project review does not exist."""
+
+
 class InvalidPdfError(ParseError):
     """Raised when PDF bytes cannot be parsed."""
 

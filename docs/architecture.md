@@ -162,6 +162,17 @@ The Streamlit UI uses project-scoped `/ask` for analyses and Q&A.
 
 Proposals are cached at `uploads/projects/{project_id}.proposal.json`. Regeneration updates only requested section keys. Export supports Markdown and DOCX; PDF returns a placeholder payload until a PDF renderer is added.
 
+## Proposal review & gap analysis (US-019)
+
+`ReviewService` compares a cached proposal against project source documents:
+
+1. Requires a cached proposal (`ProposalStorage`).
+2. For each of twelve review categories: project-scoped search with a category-specific query, then one LLM call with the category prompt and a proposal excerpt.
+3. Parses structured JSON findings (severity, recommendation, coverage status, citations).
+4. Computes aggregate metrics (coverage %, readiness score, critical counts).
+
+Reviews are cached at `uploads/projects/{project_id}.review.json`. Regeneration updates only requested category keys. Export supports Markdown and DOCX.
+
 ## Dependency injection
 
 Infrastructure is built through cached factory functions in `app/core/dependencies.py`:

@@ -5,6 +5,7 @@ from app.core.dependencies import (
     get_project_ask_service,
     get_project_document_service,
     get_project_proposal_service,
+    get_project_review_service,
     get_project_search_service,
     get_project_service,
 )
@@ -17,6 +18,7 @@ from app.core.exceptions import (
     InvalidPdfError,
     ProjectNotFoundError,
     ProposalNotFoundError,
+    ReviewNotFoundError,
     UnsupportedFileTypeError,
 )
 from app.core.config import Settings, get_settings
@@ -43,6 +45,13 @@ from app.modules.projects.services.proposal_export import (
     proposal_to_markdown,
 )
 from app.modules.projects.services.proposal_service import ProposalService
+from app.modules.projects.schemas.review import (
+    ReviewGenerateRequest,
+    ReviewRegenerateRequest,
+    ReviewResponse,
+)
+from app.modules.projects.services.review_export import review_to_docx_bytes, review_to_markdown
+from app.modules.projects.services.review_service import ReviewService
 from app.modules.projects.services.document_service import ProjectDocumentService
 from app.modules.projects.services.project_service import ProjectService
 from app.modules.projects.services.search_service import ProjectAskService, ProjectSearchService
@@ -336,4 +345,119 @@ async def export_project_proposal(
             "Content-Disposition": f'attachment; filename="{project_id}-proposal.pdf.txt"',
             "X-Export-Placeholder": "pdf-not-implemented",
         },
+    )
+
+
+@router.post("/{project_id}/review", response_model=ReviewResponse)
+async def generate_project_review(
+    project_id: str,
+    request: ReviewGenerateRequest,
+    review_service: ReviewService = Depends(get_project_review_service),
+) -> ReviewResponse:
+    """Generate an evidence-based proposal review report."""
+    try:
+        review = review_service.generate(
+            project_id,
+            top_k=request.top_k,
+            category_keys=request.category_keys,
+        )
+        return ReviewResponse(review=review)
+    except ProjectNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except ProposalNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except DocumentNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    except EmbeddingError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    except AnswerError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+
+@router.post("/{project_id}/review/regenerate", response_model=ReviewResponse)
+async def regenerate_project_review(
+    project_id: str,
+    request: ReviewRegenerateRequest,
+    review_service: ReviewService = Depends(get_project_review_service),
+) -> ReviewResponse:
+    """Regenerate selected review categories."""
+    try:
+        review = review_service.regenerate_categories(
+            project_id,
+            category_keys=request.category_keys,
+            top_k=request.top_k,
+        )
+        return ReviewResponse(review=review)
+    except ProjectNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except ProposalNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except ReviewNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except DocumentNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    except EmbeddingError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    except AnswerError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+
+@router.get("/{project_id}/review", response_model=ReviewResponse)
+async def get_project_review(
+    project_id: str,
+    review_service: ReviewService = Depends(get_project_review_service),
+) -> ReviewResponse:
+    """Return the cached proposal review report."""
+    try:
+        return ReviewResponse(review=review_service.get(project_id))
+    except ProjectNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except ReviewNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+
+@router.delete("/{project_id}/review", status_code=204)
+async def delete_project_review(
+    project_id: str,
+    review_service: ReviewService = Depends(get_project_review_service),
+) -> None:
+    """Delete the cached proposal review report."""
+    try:
+        review_service.delete(project_id)
+    except ProjectNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except ReviewNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+
+@router.get("/{project_id}/review/export")
+async def export_project_review(
+    project_id: str,
+    format: str = Query(default="markdown", pattern="^(markdown|docx)$"),
+    review_service: ReviewService = Depends(get_project_review_service),
+) -> Response:
+    """Export a cached review report as Markdown or DOCX."""
+    try:
+        review = review_service.get(project_id)
+    except ProjectNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except ReviewNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+    if format == "markdown":
+        body = review_to_markdown(review)
+        return Response(
+            content=body,
+            media_type="text/markdown; charset=utf-8",
+            headers={"Content-Disposition": f'attachment; filename="{project_id}-review.md"'},
+        )
+    body = review_to_docx_bytes(review)
+    return Response(
+        content=body,
+        media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        headers={"Content-Disposition": f'attachment; filename="{project_id}-review.docx"'},
     )

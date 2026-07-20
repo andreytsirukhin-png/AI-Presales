@@ -80,8 +80,8 @@ Integration tests use FastAPI's `TestClient` with overridden dependencies where 
 | Embeddings | `tests/integration/api/test_embeddings_api.py` |
 | Index | `tests/integration/api/test_index_api.py` |
 | Search | `tests/integration/api/test_search_api.py` |
-| Projects / proposal | `tests/integration/api/test_projects_api.py`, `test_proposal_api.py` |
-| Proposal unit | `tests/unit/modules/projects/test_proposal_service.py`, `test_proposal_export.py` |
+| Projects / proposal / review | `tests/integration/api/test_projects_api.py`, `test_proposal_api.py`, `test_review_api.py` |
+| Proposal / review unit | `tests/unit/modules/projects/test_proposal_service.py`, `test_proposal_export.py`, `test_review_parser.py`, `test_review_metrics.py`, `test_review_export.py` |
 | Ask / RAG | `tests/integration/api/test_ask_api.py` |
 | Status | `tests/integration/api/test_status_api.py` |
 | OpenAI providers | `tests/integration/api/test_openai_*_api.py` |

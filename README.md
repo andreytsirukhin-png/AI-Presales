@@ -38,6 +38,7 @@ See [docs/architecture.md](docs/architecture.md) for layered design, dependency 
 - Parse, chunk, embed, and index pipeline
 - Project workspaces with multi-document upload, auto-index, search, and Q&A (`/api/v1/projects`)
 - AI proposal generator with per-section RAG, caching, and Markdown/DOCX export
+- Proposal review and gap analysis with coverage/readiness metrics, citations, and export
 - Semantic search with per-chunk source metadata and citations on `/ask`
 - RAG question answering with retrieved source chunks
 - Presales analysis dashboard (seven preset analyses via `/ask`)
@@ -45,7 +46,7 @@ See [docs/architecture.md](docs/architecture.md) for layered design, dependency 
 - Pluggable answer providers: **mock**, **OpenAI**, **OpenRouter**
 - Platform status API for runtime provider metadata
 - Interactive OpenAPI docs at `/docs`
-- 278 automated tests with isolated configuration
+- 303 automated tests with isolated configuration
 
 ## Technology stack
 

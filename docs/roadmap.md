@@ -38,6 +38,7 @@ Implementation status for the AI Presales platform. Updated to reflect the curre
 - ✅ Source citations and traceable RAG (US-016)
 - ✅ Project workspace and multi-document retrieval (US-017)
 - ✅ AI proposal generator with section caching and export (US-018)
+- ✅ Proposal review and gap analysis with metrics and export (US-019)
 - ⬜ Authentication and authorization
 - ⬜ PostgreSQL database
 - ⬜ pgvector integration

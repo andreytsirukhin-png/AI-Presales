@@ -23,6 +23,7 @@ from ui.api_client import (
 )
 from ui.config import UiSettings, apply_backend_status, get_ui_settings
 from ui.proposal_view import render_proposal_page
+from ui.review_view import render_review_page
 from ui.prompts import ANALYSIS_LABELS
 
 
@@ -37,6 +38,7 @@ def _init_session_state() -> None:
         "last_question": "",
         "last_answer": None,
         "proposal": None,
+        "review": None,
         "ui_page": "Workspace",
     }
     for key, value in defaults.items():
@@ -152,7 +154,7 @@ def _render_sidebar(settings: UiSettings) -> None:
             _refresh_project_state(settings, st.session_state.project_id)
 
     st.sidebar.divider()
-    page = st.sidebar.radio("Navigation", ["Workspace", "Proposal"], key="ui_page")
+    page = st.sidebar.radio("Navigation", ["Workspace", "Proposal", "Review"], key="ui_page")
     st.session_state.ui_page = page
 
     st.sidebar.divider()
@@ -249,6 +251,10 @@ def main() -> None:
 
     if st.session_state.get("ui_page") == "Proposal":
         render_proposal_page(settings)
+        return
+
+    if st.session_state.get("ui_page") == "Review":
+        render_review_page(settings)
         return
 
     project_id = st.session_state.project_id

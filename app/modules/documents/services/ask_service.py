@@ -1,7 +1,8 @@
 from app.infrastructure.answers.constants import INSUFFICIENT_CONTEXT_ANSWER
 from app.infrastructure.answers.protocol import AnswerProvider
-from app.modules.documents.schemas.ask import AnswerSource, AskRequest, AskResponse
+from app.modules.documents.schemas.ask import AskRequest, AskResponse
 from app.modules.documents.schemas.search import SearchRequest
+from app.modules.documents.services.citations import build_answer_sources, build_citations
 from app.modules.documents.services.context import has_usable_context
 from app.modules.documents.services.search_service import SearchService
 
@@ -42,19 +43,14 @@ class AskService:
                 request.question,
                 search_response.results,
             )
-        sources = [
-            AnswerSource(
-                chunk_index=result.chunk_index,
-                text=result.text,
-                score=result.score,
-            )
-            for result in search_response.results
-        ]
+        sources = build_answer_sources(search_response.results)
+        citations = build_citations(search_response.results)
 
         return AskResponse(
             document_id=document_id,
             question=request.question,
             answer=answer,
             sources=sources,
+            citations=citations,
             status="answered",
         )

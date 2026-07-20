@@ -1,5 +1,7 @@
 from pydantic import BaseModel, Field
 
+from app.modules.documents.schemas.source_metadata import SourceMetadata
+
 
 class SearchRequest(BaseModel):
     """Request payload for semantic document search."""
@@ -19,6 +21,10 @@ class SearchResult(BaseModel):
     chunk_index: int = Field(..., ge=0, description="Zero-based index of the matched chunk.")
     text: str = Field(..., description="Text content of the matched chunk.")
     score: float = Field(..., description="Cosine similarity score for the match.")
+    metadata: SourceMetadata | None = Field(
+        default=None,
+        description="Traceability metadata for the matched chunk.",
+    )
 
 
 class SearchResponse(BaseModel):

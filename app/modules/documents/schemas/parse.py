@@ -6,6 +6,10 @@ class ParsedPdf(BaseModel):
 
     page_count: int = Field(..., ge=0, description="Number of pages in the PDF.")
     text: str = Field(..., description="Extracted plain text from all pages.")
+    page_texts: list[str] = Field(
+        default_factory=list,
+        description="Extracted plain text for each PDF page in order.",
+    )
 
     @property
     def pages(self) -> int:

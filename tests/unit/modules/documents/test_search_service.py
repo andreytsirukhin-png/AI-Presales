@@ -8,6 +8,22 @@ from app.modules.documents.schemas.search import SearchRequest
 from app.modules.documents.services.search_service import SearchService
 
 
+class FakeMetadataService:
+    def get(self, document_id: str) -> object:
+        class Doc:
+            filename = f"{document_id}.pdf"
+
+        return Doc()
+
+
+class FakeChunkService:
+    def chunk(self, document_id: str) -> object:
+        class Response:
+            chunks = []
+
+        return Response()
+
+
 class RecordingEmbeddingProvider:
     """Test double that records embedding calls."""
 
@@ -42,7 +58,13 @@ def search_service(
     vector_store: InMemoryVectorStore,
     provider: RecordingEmbeddingProvider,
 ) -> SearchService:
-    return SearchService(provider=provider, vector_store=vector_store)
+    return SearchService(
+        provider=provider,
+        vector_store=vector_store,
+        metadata_service=FakeMetadataService(),
+        chunk_service=FakeChunkService(),
+        embedding_model="mock",
+    )
 
 
 def test_search_returns_expected_response(
@@ -74,6 +96,8 @@ def test_search_returns_expected_response(
     assert result.query == request.query
     assert result.result_count == len(result.results)
     assert result.result_count >= 1
+    assert result.results[0].metadata is not None
+    assert result.results[0].metadata.document_name == f"{document_id}.pdf"
     assert provider.calls == [request.query]
 
 

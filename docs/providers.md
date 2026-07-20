@@ -48,6 +48,7 @@ AI_PRESALES_VECTOR_DB_PATH=./vector_store
 - Persists embeddings under `AI_PRESALES_VECTOR_DB_PATH`.
 - Uses collection name `ai-presales` with cosine similarity.
 - Supports `create_collection`, `add_documents`, `search`, `delete_document`, `clear`, and `count`.
+- Persists `SourceMetadata` fields on each chunk (see [architecture.md — Traceable RAG](architecture.md#traceable-rag-and-source-metadata)).
 - Indexed documents remain searchable after backend restart.
 
 Legacy env var `AI_PRESALES_VECTOR_STORE_BACKEND=memory` maps to `inmemory`.

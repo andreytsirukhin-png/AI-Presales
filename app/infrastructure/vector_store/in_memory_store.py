@@ -27,6 +27,7 @@ class InMemoryVectorStore:
                 index=embedding.index,
                 text=embedding.text,
                 vector=embedding.vector,
+                metadata=embedding.metadata,
             )
             for embedding in embeddings
         ]
@@ -72,6 +73,7 @@ class InMemoryVectorStore:
                     chunk_index=chunk.index,
                     text=chunk.text,
                     score=cosine_similarity(query_vector, chunk.vector),
+                    metadata=chunk.metadata,
                 )
                 for chunk in indexed_chunks
             ),

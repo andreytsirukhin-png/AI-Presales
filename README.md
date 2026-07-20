@@ -36,7 +36,7 @@ See [docs/architecture.md](docs/architecture.md) for layered design, dependency 
 
 - PDF upload with validation (type and size)
 - Parse, chunk, embed, and index pipeline
-- In-memory vector search per document
+- Semantic search with per-chunk source metadata and citations on `/ask`
 - RAG question answering with retrieved source chunks
 - Presales analysis dashboard (seven preset analyses via `/ask`)
 - Pluggable embedding providers: **mock**, **OpenAI**, **Ollama**

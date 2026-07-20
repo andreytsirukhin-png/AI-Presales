@@ -3,10 +3,15 @@ from typing import Any, Protocol
 import chromadb
 
 from app.core.exceptions import DocumentNotFoundError
+from app.infrastructure.vector_store.chroma_metadata import (
+    metadata_from_chroma,
+    metadata_to_chroma,
+)
 from app.infrastructure.vector_store.similarity import cosine_similarity
 from app.modules.documents.schemas.embedding import Embedding
 from app.modules.documents.schemas.index import IndexedChunk
 from app.modules.documents.schemas.search import SearchResult
+from app.modules.documents.schemas.source_metadata import SourceMetadata
 
 DEFAULT_COLLECTION_NAME = "ai-presales"
 COSINE_SPACE_METADATA = {"hnsw:space": "cosine"}
@@ -70,9 +75,15 @@ class ChromaVectorStore:
             embeddings=[embedding.vector for embedding in embeddings],
             documents=[embedding.text for embedding in embeddings],
             metadatas=[
-                {
+                metadata_to_chroma(embedding.metadata)
+                if embedding.metadata
+                else {
                     "document_id": document_id,
                     "chunk_index": embedding.index,
+                    "document_name": document_id,
+                    "chunk_id": f"{document_id}-chunk-{embedding.index}",
+                    "embedding_model": "unknown",
+                    "created_at": "",
                 }
                 for embedding in embeddings
             ],
@@ -136,7 +147,8 @@ class ChromaVectorStore:
         metadatas = response.get("metadatas", [[]])[0]
 
         for index, chunk_id in enumerate(ids):
-            chunk_index = int(metadatas[index]["chunk_index"])
+            metadata = metadatas[index]
+            chunk_index = int(metadata["chunk_index"])
             distance = float(distances[index])
             score = 1.0 - distance
             results.append(
@@ -144,6 +156,7 @@ class ChromaVectorStore:
                     chunk_index=chunk_index,
                     text=documents[index] or "",
                     score=score,
+                    metadata=ChromaVectorStore._metadata_from_record(metadata),
                 )
             )
 
@@ -194,6 +207,35 @@ class ChromaVectorStore:
                     index=int(metadata["chunk_index"]),
                     text=payload["documents"][index] or "",
                     vector=list(payload["embeddings"][index]),
+                    metadata=ChromaVectorStore._metadata_from_record(metadata),
                 )
             )
         return sorted(chunks, key=lambda chunk: chunk.index)
+
+    @staticmethod
+    def _metadata_from_record(metadata: dict[str, object] | None) -> SourceMetadata | None:
+        if not metadata:
+            return None
+        if "document_name" in metadata:
+            return metadata_from_chroma(metadata)
+
+        document_id = metadata.get("document_id")
+        chunk_index_raw = metadata.get("chunk_index")
+        if document_id is None or chunk_index_raw is None:
+            return None
+
+        from app.modules.documents.schemas.source_metadata import build_chunk_id
+
+        document_id_str = str(document_id)
+        chunk_index = int(chunk_index_raw)
+        page_raw = metadata.get("page_number")
+        page_number = int(page_raw) if page_raw is not None else None
+        return SourceMetadata(
+            document_id=document_id_str,
+            document_name=str(metadata.get("document_name") or document_id_str),
+            page_number=page_number,
+            chunk_id=str(metadata.get("chunk_id") or build_chunk_id(document_id_str, chunk_index)),
+            chunk_index=chunk_index,
+            embedding_model=str(metadata.get("embedding_model") or "unknown"),
+            created_at=str(metadata.get("created_at") or ""),
+        )

@@ -92,3 +92,38 @@ class TextChunker:
             start = next_start
 
         return chunks
+
+    def chunk_with_pages(self, text: str, page_texts: list[str]) -> list[TextChunk]:
+        """Split text into chunks and attach one-based page numbers when possible."""
+        raw_chunks = self.chunk(text)
+        return [
+            TextChunk(
+                index=chunk.index,
+                text=chunk.text,
+                characters=chunk.characters,
+                page_number=self._page_number_for_chunk(chunk.text, page_texts),
+                heading=self._infer_heading(chunk.text),
+            )
+            for chunk in raw_chunks
+        ]
+
+    @staticmethod
+    def _page_number_for_chunk(chunk_text: str, page_texts: list[str]) -> int | None:
+        """Resolve a chunk to the first PDF page whose text contains it."""
+        snippet = chunk_text[:120].strip()
+        if not snippet:
+            return None
+        for page_number, page_text in enumerate(page_texts, start=1):
+            if snippet in page_text:
+                return page_number
+        return None
+
+    @staticmethod
+    def _infer_heading(chunk_text: str) -> str | None:
+        """Infer a lightweight heading from the first line of a chunk."""
+        first_line = chunk_text.strip().splitlines()[0].strip()
+        if not first_line or len(first_line) > 120:
+            return None
+        if first_line.endswith("."):
+            return None
+        return first_line

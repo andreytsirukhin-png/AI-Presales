@@ -20,7 +20,10 @@ from app.main import app
 from app.modules.documents.schemas.search import SearchResult
 from app.modules.documents.services.ask_service import AskService
 from app.modules.documents.services.chunk_service import ChunkService
-from app.modules.documents.services.embedding_service import EmbeddingService
+from app.modules.documents.services.embedding_service import (
+    EmbeddingService,
+    resolve_embedding_model,
+)
 from app.modules.documents.services.index_service import IndexService
 from app.modules.documents.services.metadata_service import MetadataService
 from app.modules.documents.services.parse_service import ParseService
@@ -139,6 +142,7 @@ def test_service_dependencies_are_resolvable() -> None:
         metadata_service=metadata_service,
         chunk_service=chunk_service,
         provider=embedding_provider,
+        embedding_model=resolve_embedding_model(settings),
     )
     index_service = IndexService(
         embedding_service=embedding_service,
@@ -147,6 +151,9 @@ def test_service_dependencies_are_resolvable() -> None:
     search_service = SearchService(
         provider=embedding_provider,
         vector_store=vector_store,
+        metadata_service=metadata_service,
+        chunk_service=chunk_service,
+        embedding_model=resolve_embedding_model(settings),
     )
     ask_service = AskService(
         search_service=search_service,

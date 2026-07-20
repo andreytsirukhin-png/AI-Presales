@@ -97,6 +97,7 @@ def embedding_service(
         metadata_service=metadata_service,
         chunk_service=chunk_service,
         provider=provider,
+        embedding_model="mock",
     )
 
 

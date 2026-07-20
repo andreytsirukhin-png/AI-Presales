@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -15,7 +16,7 @@ sys.path.insert(0, str(ROOT))
 from tests.helpers.pdf import make_text_pdf
 from ui.prompts import ANALYSIS_LABELS, get_analysis_prompt
 
-BASE_URL = "http://127.0.0.1:8000"
+BASE_URL = os.environ.get("AI_PRESALES_API_BASE_URL", "http://127.0.0.1:8000")
 SAMPLE_PDF = ROOT / "data" / "20980ba6-8b0e-4b0e-ad34-9016a85fe4ac.pdf"
 SEARCH_QUERIES = [
     "CRM integration requirements",
@@ -73,13 +74,40 @@ def main() -> int:
         )
         response.raise_for_status()
         payload = response.json()
+        first = payload["results"][0] if payload["results"] else {}
+        meta = first.get("metadata") or {}
         search_results[query] = {
             "result_count": payload["result_count"],
-            "top_score": payload["results"][0]["score"] if payload["results"] else None,
-            "top_preview": payload["results"][0]["text"][:120] if payload["results"] else None,
+            "top_score": first.get("score"),
+            "top_preview": (first.get("text") or "")[:120],
+            "document_name": meta.get("document_name"),
+            "page_number": meta.get("page_number"),
+            "chunk_index": meta.get("chunk_index"),
         }
+        if payload["results"] and not meta.get("document_name"):
+            results["errors"].append(f"search missing metadata for query: {query}")
     results["search"] = search_results
     print("SEARCH", json.dumps(search_results, indent=2))
+
+    ask_response = client.post(
+        f"/api/v1/documents/{document_id}/ask",
+        json={"question": "What integrations are required?", "top_k": 5},
+    )
+    ask_response.raise_for_status()
+    ask_payload = ask_response.json()
+    results["ask"] = {
+        "status": ask_payload.get("status"),
+        "citation_count": len(ask_payload.get("citations", [])),
+        "citations": ask_payload.get("citations", [])[:3],
+        "source_metadata_sample": (
+            (ask_payload.get("sources") or [{}])[0].get("metadata")
+        ),
+    }
+    print("ASK", json.dumps(results["ask"], indent=2))
+    if not ask_payload.get("citations"):
+        results["errors"].append("ask response missing citations")
+    if ask_payload.get("sources") and not ask_payload["sources"][0].get("metadata"):
+        results["errors"].append("ask sources missing metadata")
 
     analyses: dict[str, object] = {}
     for label in ANALYSIS_LABELS:
@@ -97,6 +125,7 @@ def main() -> int:
                 "status": payload["status"],
                 "answer_length": len(payload.get("answer", "")),
                 "source_count": len(payload.get("sources", [])),
+                "citation_count": len(payload.get("citations", [])),
                 "answer_preview": payload.get("answer", "")[:160],
             }
         print("ANALYSIS", label, analyses[label].get("status", analyses[label].get("error")))
@@ -113,7 +142,7 @@ def main() -> int:
     results["mock_vs_ollama"] = comparison
     print("COMPARISON", json.dumps(comparison, indent=2))
 
-    out_path = ROOT / "docs" / "validation-us014-ollama.json"
+    out_path = ROOT / "docs" / "validation-us016-citations.json"
     out_path.write_text(json.dumps(results, indent=2), encoding="utf-8")
     print("WROTE", out_path)
     return 0 if not results["errors"] else 1

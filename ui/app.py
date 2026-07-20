@@ -52,13 +52,23 @@ def _render_sources(sources: list[dict[str, object]]) -> None:
         st.info("No supporting source chunks were returned.")
         return
 
+    st.markdown("**Sources**")
     for index, source in enumerate(sources, start=1):
-        chunk_index = source.get("chunk_index", "?")
+        metadata = source.get("metadata") or {}
+        if not isinstance(metadata, dict):
+            metadata = {}
+        document_name = metadata.get("document_name") or "document"
+        page_number = metadata.get("page_number")
+        chunk_index = source.get("chunk_index", metadata.get("chunk_index", "?"))
         score = source.get("score", 0.0)
         text = str(source.get("text", "")).strip()
-        preview = text if len(text) <= 500 else f"{text[:500]}..."
-        with st.expander(f"Source {index} · Chunk {chunk_index} · Score {score:.3f}"):
-            st.write(preview)
+        page_label = f"Page {page_number}" if page_number is not None else "Page n/a"
+        title = (
+            f"Source {index} · {document_name} · {page_label} · "
+            f"Chunk {chunk_index} · Score {float(score):.3f}"
+        )
+        with st.expander(title, expanded=False):
+            st.write(text)
 
 
 def _render_sidebar(settings: UiSettings) -> None:

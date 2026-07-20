@@ -50,4 +50,8 @@ class PDFParser:
         if not text:
             raise EmptyPdfError("PDF contains no extractable text.")
 
-        return ParsedPdf(page_count=page_count, text=text)
+        return ParsedPdf(
+            page_count=page_count,
+            text=text,
+            page_texts=extracted_pages,
+        )

@@ -39,7 +39,9 @@ def test_search_endpoint_works_after_upload_and_index() -> None:
     assert payload["result_count"] == len(payload["results"])
     assert payload["result_count"] >= 1
     assert set(payload.keys()) == {"document_id", "query", "result_count", "results"}
-    assert set(payload["results"][0].keys()) == {"chunk_index", "text", "score"}
+    assert set(payload["results"][0].keys()) == {"chunk_index", "text", "score", "metadata"}
+    assert payload["results"][0]["metadata"] is not None
+    assert "document_name" in payload["results"][0]["metadata"]
 
 
 def test_search_results_are_sorted_by_score_descending() -> None:

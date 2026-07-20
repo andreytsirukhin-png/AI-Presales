@@ -23,7 +23,10 @@ from app.modules.documents.chunkers.text_chunker import TextChunker
 from app.modules.documents.parsers.pdf_parser import PDFParser
 from app.modules.documents.services.ask_service import AskService
 from app.modules.documents.services.chunk_service import ChunkService
-from app.modules.documents.services.embedding_service import EmbeddingService
+from app.modules.documents.services.embedding_service import (
+    EmbeddingService,
+    resolve_embedding_model,
+)
 from app.modules.documents.services.index_service import IndexService
 from app.modules.documents.services.metadata_service import MetadataService
 from app.modules.documents.services.parse_service import ParseService
@@ -204,12 +207,14 @@ def get_embedding_service(
     metadata_service: MetadataService = Depends(get_metadata_service),
     chunk_service: ChunkService = Depends(get_chunk_service),
     provider: EmbeddingProvider = Depends(get_embedding_provider),
+    settings: Settings = Depends(get_settings),
 ) -> EmbeddingService:
     """Build the embedding service for the current request."""
     return EmbeddingService(
         metadata_service=metadata_service,
         chunk_service=chunk_service,
         provider=provider,
+        embedding_model=resolve_embedding_model(settings),
     )
 
 
@@ -227,9 +232,18 @@ def get_index_service(
 def get_search_service(
     provider: EmbeddingProvider = Depends(get_embedding_provider),
     vector_store: VectorStore = Depends(get_vector_store),
+    metadata_service: MetadataService = Depends(get_metadata_service),
+    chunk_service: ChunkService = Depends(get_chunk_service),
+    settings: Settings = Depends(get_settings),
 ) -> SearchService:
     """Build the search service for the current request."""
-    return SearchService(provider=provider, vector_store=vector_store)
+    return SearchService(
+        provider=provider,
+        vector_store=vector_store,
+        metadata_service=metadata_service,
+        chunk_service=chunk_service,
+        embedding_model=resolve_embedding_model(settings),
+    )
 
 
 def get_ask_service(

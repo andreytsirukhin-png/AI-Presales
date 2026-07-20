@@ -1,0 +1,207 @@
+{
+  "errors": [
+    "Assumptions: HTTP 422"
+  ],
+  "status": {
+    "status": "ok",
+    "embedding_provider": "ollama",
+    "answer_provider": "openrouter",
+    "answer_model": "openrouter/free",
+    "vector_store": "inmemory",
+    "app_environment": "development"
+  },
+  "document_id": "6af351db-9bb4-4d33-975f-3b4a507e27eb",
+  "parse": {
+    "document_id": "6af351db-9bb4-4d33-975f-3b4a507e27eb",
+    "page_count": 2,
+    "pages": 2,
+    "characters": 2311,
+    "text": "Request for Proposal (RFP): Enterprise CRM\n System Development\n1. Purpose\nThe Customer invites qualified vendors to design, develop, integrate, deploy and\nsupport an enterprise Customer Relationship Management (CRM) platform.\n2. Business Objectives\nProvide a single source of truth for customers, sales pipeline, marketing, customer\nservice, contracts, and analytics. Improve sales conversion, automate workflows, and\nprovide management reporting.\n3. Scope of Work\nDiscovery, business analysis, UX/UI, architecture, development, testing, deployment,\ntraining, documentation, hypercare, and warranty.\n4. Functional Requirements\nCustomer management; Leads; Opportunities; Sales pipeline; Quotes; Contracts;\nActivities; Tasks; Calendar; Email integration; Marketing campaigns; Customer support;\nKnowledge base; Dashboards; Role-based access; Audit logs; Notifications; Workflow\nautomation; REST APIs; Import/export; Multi-language; Multi-currency.\n5. Non-Functional Requirements\nAvailability 99.9%; scalable architecture; response time <2 seconds for standard\noperations; GDPR compliance; encryption in transit and at rest; SSO (OAuth2/SAML);\nlogging; monitoring; backup & disaster recovery.\n6. Integrations\nERP, Email (Microsoft 365/Google), Telephony, BI, Identity Provider, Payment systems,\nDocument Management, APIs.\n7. Deliverables\nRequirements specification, architecture, UX/UI, source code, test cases, deployment\nscripts, user guide, admin guide, training materials.\n8. Project Plan\nDiscovery, Design, MVP, Full Implementation, UAT, Go-Live, Hypercare.\n9. Vendor Response\n\nCompany profile, relevant experience, architecture proposal, implementation\napproach, team, timeline, assumptions, risks, cost breakdown, support model,\nreferences.\n10. Evaluation Criteria\nFunctional fit 30%, Technical approach 20%, Experience 15%, Team 10%, Delivery\nmethodology 10%, Cost 10%, Support 5%.\n11. Acceptance Criteria\nAll mandatory requirements implemented, UAT passed, documentation delivered,\nproduction deployment completed, knowledge transfer finished.\n12. Commercial Terms\nFixed Price preferred; milestone payments; warranty 3 months minimum; SLA proposal\nrequired.\n13. Submission\nProposal should include schedule, WBS, architecture diagrams, staffing plan, risks,\nassumptions, exclusions, and commercial proposal.",
+    "status": "parsed"
+  },
+  "chunks": {
+    "document_id": "6af351db-9bb4-4d33-975f-3b4a507e27eb",
+    "chunk_count": 3,
+    "chunks": [
+      {
+        "index": 0,
+        "text": "Request for Proposal (RFP): Enterprise CRM\n System Development\n1. Purpose\nThe Customer invites qualified vendors to design, develop, integrate, deploy and\nsupport an enterprise Customer Relationship Management (CRM) platform.\n2. Business Objectives\nProvide a single source of truth for customers, sales pipeline, marketing, customer\nservice, contracts, and analytics. Improve sales conversion, automate workflows, and\nprovide management reporting.\n3. Scope of Work\nDiscovery, business analysis, UX/UI, architecture, development, testing, deployment,\ntraining, documentation, hypercare, and warranty.\n4. Functional Requirements\nCustomer management; Leads; Opportunities; Sales pipeline; Quotes; Contracts;\nActivities; Tasks; Calendar; Email integration; Marketing campaigns; Customer support;\nKnowledge base; Dashboards; Role-based access; Audit logs; Notifications; Workflow\nautomation; REST APIs; Import/export; Multi-language; Multi-currency.\n5. Non-Functional Requirements\nAvailability 99.9%;",
+        "characters": 995,
+        "page_number": 1,
+        "section": null,
+        "heading": "Request for Proposal (RFP): Enterprise CRM"
+      },
+      {
+        "index": 1,
+        "text": "logs; Notifications; Workflow\nautomation; REST APIs; Import/export; Multi-language; Multi-currency.\n5. Non-Functional Requirements\nAvailability 99.9%; scalable architecture; response time <2 seconds for standard\noperations; GDPR compliance; encryption in transit and at rest; SSO (OAuth2/SAML);\nlogging; monitoring; backup & disaster recovery.\n6. Integrations\nERP, Email (Microsoft 365/Google), Telephony, BI, Identity Provider, Payment systems,\nDocument Management, APIs.\n7. Deliverables\nRequirements specification, architecture, UX/UI, source code, test cases, deployment\nscripts, user guide, admin guide, training materials.\n8. Project Plan\nDiscovery, Design, MVP, Full Implementation, UAT, Go-Live, Hypercare.\n9. Vendor Response\n\nCompany profile, relevant experience, architecture proposal, implementation\napproach, team, timeline, assumptions, risks, cost breakdown, support model,\nreferences.\n10. Evaluation Criteria\nFunctional fit 30%, Technical approach 20%, Experience 15%, Team 10%,",
+        "characters": 992,
+        "page_number": 1,
+        "section": null,
+        "heading": "logs; Notifications; Workflow"
+      },
+      {
+        "index": 2,
+        "text": "tions, risks, cost breakdown, support model,\nreferences.\n10. Evaluation Criteria\nFunctional fit 30%, Technical approach 20%, Experience 15%, Team 10%, Delivery\nmethodology 10%, Cost 10%, Support 5%.\n11. Acceptance Criteria\nAll mandatory requirements implemented, UAT passed, documentation delivered,\nproduction deployment completed, knowledge transfer finished.\n12. Commercial Terms\nFixed Price preferred; milestone payments; warranty 3 months minimum; SLA proposal\nrequired.\n13. Submission\nProposal should include schedule, WBS, architecture diagrams, staffing plan, risks,\nassumptions, exclusions, and commercial proposal.",
+        "characters": 624,
+        "page_number": 2,
+        "section": null,
+        "heading": "tions, risks, cost breakdown, support model,"
+      }
+    ]
+  },
+  "embeddings": {
+    "document_id": "6af351db-9bb4-4d33-975f-3b4a507e27eb",
+    "chunk_count": 3,
+    "embedding_dimension": 768,
+    "status": "embedded"
+  },
+  "index": {
+    "document_id": "6af351db-9bb4-4d33-975f-3b4a507e27eb",
+    "chunks_indexed": 3,
+    "status": "indexed"
+  },
+  "search": {
+    "CRM integration requirements": {
+      "result_count": 3,
+      "top_score": 0.7066900950042995,
+      "top_preview": "Request for Proposal (RFP): Enterprise CRM\n System Development\n1. Purpose\nThe Customer invites qualified vendors to desi",
+      "document_name": "20980ba6-8b0e-4b0e-ad34-9016a85fe4ac.pdf",
+      "page_number": 1,
+      "chunk_index": 0
+    },
+    "project delivery timeline and phases": {
+      "result_count": 3,
+      "top_score": 0.5577094292161455,
+      "top_preview": "tions, risks, cost breakdown, support model,\nreferences.\n10. Evaluation Criteria\nFunctional fit 30%, Technical approach ",
+      "document_name": "20980ba6-8b0e-4b0e-ad34-9016a85fe4ac.pdf",
+      "page_number": 2,
+      "chunk_index": 2
+    },
+    "security and compliance requirements": {
+      "result_count": 3,
+      "top_score": 0.53462129730927,
+      "top_preview": "logs; Notifications; Workflow\nautomation; REST APIs; Import/export; Multi-language; Multi-currency.\n5. Non-Functional Re",
+      "document_name": "20980ba6-8b0e-4b0e-ad34-9016a85fe4ac.pdf",
+      "page_number": 1,
+      "chunk_index": 1
+    }
+  },
+  "ask": {
+    "status": "answered",
+    "citation_count": 3,
+    "citations": [
+      {
+        "document": "20980ba6-8b0e-4b0e-ad34-9016a85fe4ac.pdf",
+        "page": 2,
+        "score": 0.5429008711203835,
+        "chunk_index": 2,
+        "chunk_id": "6af351db-9bb4-4d33-975f-3b4a507e27eb-chunk-2"
+      },
+      {
+        "document": "20980ba6-8b0e-4b0e-ad34-9016a85fe4ac.pdf",
+        "page": 1,
+        "score": 0.5216439187845116,
+        "chunk_index": 1,
+        "chunk_id": "6af351db-9bb4-4d33-975f-3b4a507e27eb-chunk-1"
+      },
+      {
+        "document": "20980ba6-8b0e-4b0e-ad34-9016a85fe4ac.pdf",
+        "page": 1,
+        "score": 0.4960236241159121,
+        "chunk_index": 0,
+        "chunk_id": "6af351db-9bb4-4d33-975f-3b4a507e27eb-chunk-0"
+      }
+    ],
+    "source_metadata_sample": {
+      "document_id": "6af351db-9bb4-4d33-975f-3b4a507e27eb",
+      "document_name": "20980ba6-8b0e-4b0e-ad34-9016a85fe4ac.pdf",
+      "page_number": 2,
+      "chunk_id": "6af351db-9bb4-4d33-975f-3b4a507e27eb-chunk-2",
+      "chunk_index": 2,
+      "embedding_model": "nomic-embed-text",
+      "created_at": "2026-07-20T18:45:19.425247+00:00",
+      "section": null,
+      "heading": "tions, risks, cost breakdown, support model,"
+    }
+  },
+  "analyses": {
+    "Executive Summary": {
+      "status": "answered",
+      "answer_length": 452,
+      "source_count": 3,
+      "citation_count": 3,
+      "answer_preview": "**Executive Summary \u2013 RFP: Enterprise CRM System Development**\n\nThe Customer is issuing a Request for Proposal (RFP) to engage qualified vendors to **design, de"
+    },
+    "Requirements": {
+      "status": "answered",
+      "answer_length": 814,
+      "source_count": 3,
+      "citation_count": 3,
+      "answer_preview": "**Functional Requirements**  \n- Customer management  \n- Leads  \n- Opportunities  \n- Sales pipeline  \n- Quotes  \n- Contracts  \n- Activities  \n- Tasks  \n- Calenda"
+    },
+    "Risks": {
+      "status": "answered",
+      "answer_length": 1043,
+      "source_count": 3,
+      "citation_count": 3,
+      "answer_preview": "The RFP does not enumerate a specific list of delivery or commercial risks. Instead, it **requires vendors to address risks in their proposals** (see page\u202f2, \u201cV"
+    },
+    "Clarification Questions": {
+      "status": "answered",
+      "answer_length": 1947,
+      "source_count": 3,
+      "citation_count": 3,
+      "answer_preview": "**Clarification Questions for the Enterprise CRM RFP (to be sent before providing a cost estimate)**  \n\n1. **User Base & Licensing**  \n   - How many end\u2011users ("
+    },
+    "Assumptions": {
+      "error": "{\"detail\":\"OpenRouter answer response did not contain generated text.\"}"
+    },
+    "Cost Drivers": {
+      "status": "answered",
+      "answer_length": 774,
+      "source_count": 3,
+      "citation_count": 3,
+      "answer_preview": "The document does not explicitly list factors that \"significantly increase implementation effort\" in its provided context. However, based on the content, potent"
+    },
+    "Delivery Phases": {
+      "status": "answered",
+      "answer_length": 2126,
+      "source_count": 3,
+      "citation_count": 3,
+      "answer_preview": "**High\u2011Level Delivery Plan (based on the RFP)**  \n\n| Phase | Key Activities | Primary Deliverables | Reference(s) |\n|-------|----------------|------------------"
+    }
+  },
+  "persistence": {
+    "required": false,
+    "skipped": true,
+    "reason": "vector_store=inmemory"
+  },
+  "mock_vs_ollama": {
+    "query": "SAP integration and CRM requirements",
+    "chunk_count": 3,
+    "mock_top_scores": [
+      0.8443,
+      0.8374,
+      0.8041
+    ],
+    "ollama_top_scores": [
+      0.6999,
+      0.5237,
+      0.5119
+    ],
+    "mock_top_previews": [
+      "tions, risks, cost breakdown, support model,\nreferences.\n10. Evaluation Criteria\nFunctional fit 30%,",
+      "logs; Notifications; Workflow\nautomation; REST APIs; Import/export; Multi-language; Multi-currency.\n",
+      "Request for Proposal (RFP): Enterprise CRM\n System Development\n1. Purpose\nThe Customer invites quali"
+    ],
+    "ollama_top_previews": [
+      "Request for Proposal (RFP): Enterprise CRM\n System Development\n1. Purpose\nThe Customer invites quali",
+      "tions, risks, cost breakdown, support model,\nreferences.\n10. Evaluation Criteria\nFunctional fit 30%,",
+      "logs; Notifications; Workflow\nautomation; REST APIs; Import/export; Multi-language; Multi-currency.\n"
+    ],
+    "notes": [
+      "Mock vectors are hash-derived and not semantically aligned with queries.",
+      "Ollama vectors should rank integration-related chunks higher for integration queries."
+    ]
+  }
+}

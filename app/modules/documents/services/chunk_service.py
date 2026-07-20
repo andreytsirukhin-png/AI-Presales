@@ -51,7 +51,10 @@ class ChunkService:
             ) from exc
 
         parsed = self._parser.parse(content)
-        chunks = self._chunker.chunk(parsed.text)
+        if parsed.page_texts:
+            chunks = self._chunker.chunk_with_pages(parsed.text, parsed.page_texts)
+        else:
+            chunks = self._chunker.chunk(parsed.text)
 
         return ChunkResponse(
             document_id=document_id,

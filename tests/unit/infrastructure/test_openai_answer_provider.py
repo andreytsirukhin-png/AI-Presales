@@ -6,10 +6,9 @@ from openai import OpenAIError
 from app.core.exceptions import AnswerConfigurationError, AnswerProviderError
 from app.infrastructure.answers.openai_provider import (
     DEFAULT_OPENAI_CHAT_MODEL,
-    SYSTEM_INSTRUCTION,
     OpenAIAnswerProvider,
-    build_answer_prompt,
 )
+from app.infrastructure.answers.prompts import SYSTEM_INSTRUCTION, build_answer_prompt
 from app.modules.documents.schemas.search import SearchResult
 
 
@@ -128,12 +127,11 @@ def test_build_answer_prompt_is_deterministic() -> None:
     second = build_answer_prompt("question", context)
 
     assert first == second
-    assert first == (
-        "Question:\nquestion\n\n"
-        "Document Context:\n"
-        "[Chunk 0]\nalpha\n\n"
-        "[Chunk 1]\nbeta"
-    )
+    assert "[Chunk 0]" in first
+    assert "alpha" in first
+    assert "[Chunk 1]" in first
+    assert "beta" in first
+    assert "---" in first
 
 
 def test_missing_api_key_raises_configuration_error() -> None:

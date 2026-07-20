@@ -61,7 +61,8 @@ Unit tests exercise services, providers, and UI helpers in isolation.
 | Config | `tests/unit/core/test_config.py` |
 | DI wiring | `tests/unit/core/test_answer_dependencies.py` |
 | Mock/OpenAI/OpenRouter providers | `tests/unit/infrastructure/test_*_provider.py` |
-| Document services | `tests/unit/modules/documents/test_ask_service.py` |
+| Document services | `tests/unit/modules/documents/test_ask_service.py`, `test_citations.py`, `test_text_chunker_pages.py` |
+| Answer prompts / citations | `tests/unit/infrastructure/test_answer_prompts.py`, `test_chroma_metadata.py`, `test_chroma_metadata_persistence.py` |
 | UI client | `tests/unit/ui/test_api_client.py` |
 | Analysis handlers | `tests/unit/ui/test_analysis_handlers.py` |
 
@@ -102,7 +103,7 @@ Tests that need specific env values should set them explicitly with `monkeypatch
 The suite covers:
 
 - Full document pipeline (upload through index)
-- Semantic search and ask/RAG flows
+- Semantic search and ask/RAG flows (including `metadata` on search results and `citations` on ask responses)
 - All three answer providers (mock, OpenAI, OpenRouter)
 - Vector store backends (in-memory and ChromaDB)
 - Platform status API

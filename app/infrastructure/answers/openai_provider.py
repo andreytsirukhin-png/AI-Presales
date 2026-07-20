@@ -3,17 +3,10 @@ from typing import Protocol
 from openai import OpenAI, OpenAIError
 
 from app.core.exceptions import AnswerConfigurationError, AnswerProviderError
+from app.infrastructure.answers.prompts import SYSTEM_INSTRUCTION, build_answer_prompt
 from app.modules.documents.schemas.search import SearchResult
 
 DEFAULT_OPENAI_CHAT_MODEL = "gpt-4.1-mini"
-
-SYSTEM_INSTRUCTION = (
-    "You answer questions using only the supplied document context. "
-    "Do not use external knowledge. "
-    "If the answer cannot be found in the context, clearly state that the document "
-    "does not contain enough information. "
-    "Do not invent facts."
-)
 
 
 class OpenAIClientProtocol(Protocol):
@@ -31,23 +24,6 @@ class OpenAIClientProtocol(Protocol):
         ) -> object: ...
 
     responses: Responses
-
-
-def build_answer_prompt(question: str, context_chunks: list[SearchResult]) -> str:
-    """Build a deterministic user prompt from a question and retrieved chunks."""
-    context_sections: list[str] = []
-    for chunk in context_chunks:
-        chunk_text = chunk.text.strip()
-        if not chunk_text:
-            continue
-        context_sections.append(f"[Chunk {chunk.chunk_index}]\n{chunk_text}")
-
-    context_body = "\n\n".join(context_sections)
-    return (
-        f"Question:\n{question.strip()}\n\n"
-        "Document Context:\n"
-        f"{context_body}"
-    )
 
 
 class OpenAIAnswerProvider:

@@ -80,6 +80,7 @@ def index_service(
         metadata_service=metadata_service,
         chunk_service=chunk_service,
         provider=MockEmbeddingProvider(),
+        embedding_model="mock",
     )
     return IndexService(
         embedding_service=embedding_service,
@@ -103,6 +104,9 @@ def test_index_returns_expected_response_and_stores_embeddings(
     assert result.status == "indexed"
     assert result.chunks_indexed >= 1
     assert len(stored) == result.chunks_indexed
+    assert stored[0].metadata is not None
+    assert stored[0].metadata.document_name == f"{document_id}.pdf"
+    assert stored[0].metadata.embedding_model == "mock"
 
 
 def test_index_raises_when_metadata_missing(

@@ -40,14 +40,23 @@ def test_ask_endpoint_works_after_upload_and_index() -> None:
     assert payload["status"] == "answered"
     assert payload["answer"]
     assert payload["sources"]
+    assert payload["citations"]
     assert set(payload.keys()) == {
         "document_id",
         "question",
         "answer",
         "sources",
+        "citations",
         "status",
     }
-    assert set(payload["sources"][0].keys()) == {"chunk_index", "text", "score"}
+    assert set(payload["sources"][0].keys()) == {"chunk_index", "text", "score", "metadata"}
+    assert set(payload["citations"][0].keys()) == {
+        "document",
+        "page",
+        "score",
+        "chunk_index",
+        "chunk_id",
+    }
 
 
 def test_ask_sources_match_semantic_search_output() -> None:

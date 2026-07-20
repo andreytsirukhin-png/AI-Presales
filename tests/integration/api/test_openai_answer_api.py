@@ -95,14 +95,13 @@ def test_answer_provider_receives_only_retrieved_chunks() -> None:
         assert len(override_provider.calls) == 1
         retrieved_chunks = override_provider.calls[0][1]
         assert len(retrieved_chunks) <= 2
-        assert ask_response.json()["sources"] == [
-            {
-                "chunk_index": chunk.chunk_index,
-                "text": chunk.text,
-                "score": chunk.score,
-            }
-            for chunk in retrieved_chunks
-        ]
+        sources = ask_response.json()["sources"]
+        assert len(sources) == len(retrieved_chunks)
+        for source, chunk in zip(sources, retrieved_chunks, strict=True):
+            assert source["chunk_index"] == chunk.chunk_index
+            assert source["text"] == chunk.text
+            assert source["score"] == chunk.score
+            assert source["metadata"] is not None
     finally:
         app.dependency_overrides.clear()
 
@@ -140,6 +139,7 @@ def test_mock_answer_mode_still_works_end_to_end() -> None:
         "question",
         "answer",
         "sources",
+        "citations",
         "status",
     }
 

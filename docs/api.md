@@ -283,7 +283,9 @@ curl -s -X POST http://localhost:8000/api/v1/documents/{document_id}/index
 | `document_id` | string | Document identifier |
 | `query` | string | Submitted query |
 | `result_count` | integer | Number of results returned |
-| `results` | array | `{ chunk_index, text, score }` ranked by similarity |
+| `results` | array | `{ chunk_index, text, score, metadata? }` ranked by similarity |
+
+Each result may include `metadata` (`SourceMetadata`): `document_id`, `document_name`, `page_number`, `chunk_id`, `chunk_index`, `embedding_model`, `created_at`, and optional `section` / `heading`.
 
 **Example:**
 
@@ -320,8 +322,11 @@ curl -s -X POST http://localhost:8000/api/v1/documents/{document_id}/search \
 | `document_id` | string | Document identifier |
 | `question` | string | Submitted question |
 | `answer` | string | Generated answer |
-| `sources` | array | `{ chunk_index, text, score }` supporting chunks |
+| `sources` | array | `{ chunk_index, text, score, metadata? }` supporting chunks |
+| `citations` | array | `{ document, page, score, chunk_index?, chunk_id? }` compact references |
 | `status` | string | `"answered"` |
+
+Existing clients can keep using `chunk_index`, `text`, and `score` on `sources`. New clients should prefer `citations` for UI source lists and `metadata` on search/ask sources for traceability.
 
 **Example:**
 

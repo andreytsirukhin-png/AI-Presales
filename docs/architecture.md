@@ -113,7 +113,7 @@ flowchart LR
     Chunks --> Context{"Usable context?"}
     Context -->|No| Fallback["INSUFFICIENT_CONTEXT_ANSWER"]
     Context -->|Yes| Provider["AnswerProvider"]
-    Provider --> Answer["Answer + sources"]
+    Provider --> Answer["Answer + sources + citations"]
 ```
 
 `AskService` (`app/modules/documents/services/ask_service.py`):
@@ -121,7 +121,20 @@ flowchart LR
 1. Runs semantic search with the question as the query.
 2. Checks retrieved chunks with `has_usable_context()`.
 3. Calls the configured answer provider or returns a fixed insufficient-context message.
-4. Returns the answer with ranked source chunks and similarity scores.
+4. Returns the answer with ranked source chunks, compact citations, and similarity scores.
+
+## Traceable RAG and source metadata
+
+Indexed chunks carry `SourceMetadata` from upload through search and ask:
+
+| Field | Purpose |
+| --- | --- |
+| `document_id` / `document_name` | Link answers to the uploaded file |
+| `page_number` | PDF page reference when chunking can infer it |
+| `chunk_id` / `chunk_index` | Stable chunk identity in the vector store |
+| `embedding_model` / `created_at` | Index-time audit fields |
+
+Metadata is attached at embedding time (`EmbeddingService`), stored in ChromaDB via `metadata_to_chroma`, and returned on `SearchResult.metadata`. Answer providers receive formatted source blocks from `app/infrastructure/answers/prompts.py` (document, page, chunk, content). Citations are derived in `app/modules/documents/services/citations.py` without changing vector-store interfaces.
 
 Preset Streamlit analyses use the same `/ask` endpoint with prompts from `ui/prompts.py`.
 
